@@ -1,0 +1,64 @@
+:root{
+  --ink:#eef4f8; --dim:#9fb4c8; --accent:#2dd9c0; --accent2:#ff6b57;
+  --panel:rgba(10,18,30,0.82);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0a1018;overflow:hidden;font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;color:var(--ink)}
+#wrap{position:relative;width:min(100vw,160vh);aspect-ratio:16/10;margin:auto;top:50%;transform:translateY(-50%)}
+canvas{width:100%;height:100%;display:block;border-radius:6px}
+.overlay{position:absolute;inset:0;pointer-events:none}
+
+/* controls bar — top of screen so it never covers the player */
+#help{position:absolute;top:0.9%;left:0;right:0;text-align:center;color:#7e93a8;
+     font-size:clamp(8px,1.12vw,11.5px);text-shadow:0 1px 2px #000;pointer-events:none}
+#help b{color:#c8d8e6;font-weight:600}
+
+/* scoreboard */
+#hud{position:absolute;top:4.6%;left:2%;background:var(--panel);border:1px solid rgba(255,255,255,.12);
+     border-radius:8px;padding:.55em .9em;font-size:clamp(10px,1.55vw,15px);line-height:1.45;
+     font-variant-numeric:tabular-nums;backdrop-filter:blur(4px);display:none;pointer-events:none}
+#hud table{border-collapse:collapse}
+#hud td{padding:0 .45em;text-align:center;white-space:nowrap}
+#hud td.nm{text-align:left;min-width:4.2em;font-weight:600}
+#hud .srv{color:var(--accent)}
+#hud .hdr td{font-size:.72em;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+
+#rallyhud{position:absolute;top:4.6%;left:50%;transform:translateX(-50%);background:var(--panel);
+     border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:.35em 1.2em;
+     font-size:clamp(10px,1.6vw,15px);display:none;pointer-events:none;font-variant-numeric:tabular-nums}
+
+#servehint{position:absolute;top:10.5%;left:50%;transform:translateX(-50%);color:var(--dim);
+     font-size:clamp(9px,1.4vw,13px);text-shadow:0 1px 3px #000;display:none;pointer-events:none;text-align:center}
+
+#msg{position:absolute;top:30%;left:0;right:0;text-align:center;pointer-events:none;
+     font-size:clamp(18px,3.6vw,38px);font-weight:700;letter-spacing:.04em;
+     text-shadow:0 2px 14px rgba(0,0,0,.85);opacity:0;transition:opacity .18s}
+#msg .sub{display:block;font-size:.48em;font-weight:500;color:var(--dim);margin-top:.35em;letter-spacing:.06em}
+
+#shotlbl{position:absolute;bottom:6%;right:3%;font-size:clamp(11px,1.9vw,18px);font-weight:600;
+     color:var(--accent);text-shadow:0 1px 6px #000;opacity:0;transition:opacity .15s;pointer-events:none}
+
+/* menu */
+#menu{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      background:rgba(5,10,18,.62);backdrop-filter:blur(5px);border-radius:6px}
+#menu .card{background:rgba(12,20,34,.92);border:1px solid rgba(255,255,255,.14);border-radius:14px;
+      padding:2em 2.6em;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.5);max-width:88%}
+#menu h1{font-size:clamp(22px,4vw,42px);letter-spacing:.12em;font-weight:800;
+      background:linear-gradient(90deg,#5be7d0,#8fd3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#menu .tag{color:var(--dim);font-size:clamp(9px,1.4vw,13px);margin:.3em 0 1.4em;letter-spacing:.18em;text-transform:uppercase}
+.row{display:flex;gap:.6em;justify-content:center;margin-bottom:1.1em;flex-wrap:wrap}
+.pill,.bigbtn{cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);
+      color:var(--ink);border-radius:999px;padding:.45em 1.3em;font-size:clamp(10px,1.5vw,15px);
+      font-family:inherit;transition:all .12s}
+.pill:hover,.bigbtn:hover{background:rgba(255,255,255,.13)}
+.pill.sel{background:var(--accent);border-color:var(--accent);color:#06281f;font-weight:700}
+.bigbtn{border-radius:10px;padding:.7em 1.6em;display:block;width:100%;margin-bottom:.55em;font-weight:600}
+.bigbtn .d{display:block;font-size:.72em;color:var(--dim);font-weight:400;margin-top:.15em}
+.bigbtn:hover .d{color:#cfe0ee}
+#resumeBtn{display:none;background:rgba(45,217,192,.14);border-color:var(--accent)}
+#menu .ctl{margin-top:1.1em;color:#88a0b6;font-size:clamp(8px,1.12vw,11.5px);line-height:1.7;text-align:left}
+#menu .ctl b{color:#d4e2ee;font-weight:600}
+#menu .lbl{color:var(--dim);font-size:.78em;text-transform:uppercase;letter-spacing:.14em;margin-bottom:.5em}
+#overTxt{display:none;font-size:clamp(15px,2.4vw,24px);margin-bottom:1em;color:var(--ink)}
+#overTxt .big{font-size:1.5em;font-weight:800;color:var(--accent)}
+#overTxt .st{color:var(--dim);font-size:.7em;margin-top:.4em}

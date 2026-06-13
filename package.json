@@ -1,0 +1,26 @@
+{
+  "name": "tennis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opensignal4214/tennis-king.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/opensignal4214/tennis-king/issues"
+  },
+  "homepage": "https://github.com/opensignal4214/tennis-king#readme",
+  "devDependencies": {
+    "vite": "^8.0.16"
+  }
+}

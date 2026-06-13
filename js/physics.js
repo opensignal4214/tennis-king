@@ -22,7 +22,9 @@ export function solveShot(fx, fy, fz, tx, tz, speed, gEff, clear) {
 
 export function simToPlane(zPlane) {
   const b = G.ball;
-  if (!b.active || b.held || b.vz <= 0.4) return null;
+  if (!b.active || b.held) return null;
+  if (b.vz <= 0.1) return b.z >= zPlane ? { t: 0, x: b.x, y: b.y } : null;
+  if (b.z >= zPlane) return { t: 0, x: b.x, y: b.y };
   let x = b.x, y = b.y, z = b.z, vx = b.vx, vy = b.vy, vz = b.vz, spin = b.spin, curve = b.curve || 0;
   const dt = 1 / 120;
   for (let t = 0; t < 2.4; t += dt) {

@@ -5,7 +5,7 @@ import { simToPlane } from './physics.js';
 import { updateBall } from './ball.js';
 import { updateToss } from './serve.js';
 import { updatePlayer } from './player.js';
-import { updateNPC } from './npc.js';
+import { updateNPC, updatePartner, updateNPC2 } from './npc.js';
 import { render } from './render.js';
 import { logTick, logFrame } from './logger.js';
 import './menu.js';
@@ -26,6 +26,8 @@ function update(dt) {
 
   updatePlayer(dt);
   updateNPC(dt);
+  updatePartner(dt);
+  updateNPC2(dt);
   updateBall(dt);
 
   if (G.state === 'live' && G.ball.lastHitter === 1) {

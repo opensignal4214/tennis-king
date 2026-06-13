@@ -13,6 +13,20 @@ export const G = {
   strike:null, fb:null,
   mute:false, paused:false, started:false,
   cam:{x:0, y:8.6, z:19.9},
+
+  // Doubles mode
+  matchType:'singles',         // 'singles' | 'doubles'
+  playerColor:'teal',
+  partnerColor:'cobalt',
+  npcColors:['coral','amber'],
+  partner:null,                // AI partner entity (human team), null in singles
+  npc2:null,                   // second CPU entity, null in singles
+  lastHitterEntity:0,          // 0=player,1=partner,2=npc,3=npc2 — for AI decisions
+  cpuHitter:null,              // entity object (npc or npc2) designated to hit this ball
+  serveOrder:[],               // [0,2,1,3] or [2,0,3,1] — entity ids
+  serveOrderIdx:0,
+  receiveHuman:0,              // which human-team member receives (0=player,1=partner)
+  receiveCpu:0,                // which cpu-team member receives (0=npc,1=npc2)
 };
 window.G = G;
 

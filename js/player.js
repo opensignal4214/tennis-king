@@ -63,7 +63,7 @@ export function updatePlayer(dt) {
   if (p.charge) {
     p.charge.t += dt;
     const st = G.strike, b = G.ball;
-    const reachable = st ? Math.abs(st.x - p.x) <= 1.7 : Math.abs(b.x - p.x) <= 1.7;
+    const reachable = st ? Math.abs(st.x - p.x) <= 1.6 : Math.abs(b.x - p.x) <= 1.6;
     // ball reached the contact point (st.t floors near 0); only fall back to the
     // "passed the body" test when there is no prediction, so moving forward into an
     // incoming ball can't false-trigger a fresh charge.
@@ -100,7 +100,7 @@ export function canPlayerHit() {
   if (!b.active || b.held || b.lastHitter !== 1 || b.isServe) return false;
   if (b.z < -0.35) return false;
   const d = Math.hypot(b.x - p.x, b.z - p.z);
-  return d < 1.4 && b.y < 3.45;
+  return d < 1.6 && b.y < 3.45;
 }
 
 export function strokePress(key) {
@@ -108,7 +108,7 @@ export function strokePress(key) {
   if (G.state !== 'live') return;
   if (p.charge || p.pending || p.cool > 0 || p.swingCd > 0) return;
   if (b.lastHitter !== 1 || b.held) return;
-  if (b.bounces === 0 && p.z < 8.5) { instantHit(key); return; }
+  if (b.bounces === 0 && p.z < 8.5 && b.y <= 1.85) { instantHit(key); return; }
   const st = G.strike;
   p.charge = { key, t: 0 };
   p.anim = { t: 0, side: p.antSide || (st && st.x >= p.x ? 1 : -1), type: 'ground', charging: true };
@@ -205,25 +205,25 @@ function doPlayerHit() {
   const aim  = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
   const depth = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
 
-  let spin = 0, speed, clear, tzBase, label, animType = 'ground', penalty = 1, shotTol = 1;
+  let spin = 0, speed, clear, tzBase, label, animType = 'ground', penalty = 1, shotTol = 1, shotType = 'flat';
   const atNet = p.z < 7.2;
   if (!bounced && b.y > 1.85) {
     animType = 'smash';
-    if (pend.key === 'KeyJ')      { speed = 34;   clear = 0.22; tzBase = -8.6;  label = 'Overhead!'; }
-    else if (pend.key === 'KeyK') { spin = -1; speed = 24; clear = 0.3; tzBase = -7.6; label = 'Slice Overhead'; }
-    else                          { spin = -1; speed = 11; clear = 0.5; tzBase = -3.4; label = 'Touch Overhead'; }
+    if (pend.key === 'KeyJ')      { speed = 34;   clear = 0.22; tzBase = -8.6;  label = 'Overhead!';      shotType = 'smash'; }
+    else if (pend.key === 'KeyK') { spin = -1; speed = 24; clear = 0.3; tzBase = -7.6; label = 'Slice Overhead'; shotType = 'slice'; }
+    else                          { spin = -1; speed = 11; clear = 0.5; tzBase = -3.4; label = 'Touch Overhead'; shotType = 'soft'; }
   } else if (!bounced) {
     animType = 'volley';
-    if (pend.key === 'KeyJ')      { speed = 17;   clear = 0.5;  tzBase = -6.8; label = `${fh} Punch Volley`; }
-    else if (pend.key === 'KeyK') { spin = -1; speed = 13; clear = 0.5; tzBase = -5.5; label = `${fh} Slice Volley`; }
-    else                          { spin = -1; speed = 10.5; clear = 0.55; tzBase = -3.6; label = `${fh} Drop Volley`; }
+    if (pend.key === 'KeyJ')      { speed = 17;   clear = 0.5;  tzBase = -6.8; label = `${fh} Punch Volley`;  shotType = 'flat'; }
+    else if (pend.key === 'KeyK') { spin = -1; speed = 13; clear = 0.5; tzBase = -5.5; label = `${fh} Slice Volley`; shotType = 'slice'; }
+    else                          { spin = -1; speed = 10.5; clear = 0.55; tzBase = -3.6; label = `${fh} Drop Volley`; shotType = 'soft'; }
     if (!atNet) penalty = 1.35;
   } else {
-    if (pend.key === 'KeyJ')      { spin = 1;  speed = 23.5; clear = 0.78; tzBase = -9.7;  label = `${fh} Top Spin`;  shotTol = 0.7; }
-    else if (pend.key === 'KeyK') { spin = -1; speed = 16.5; clear = 1.05; tzBase = -9.4;  label = `${fh} Slice`;     shotTol = 0.95; }
-    else if (pend.key === 'KeyL') { spin = 0;  speed = 27;   clear = 0.42; tzBase = -10.0; label = `${fh} Flat Drive`; shotTol = 1.5; }
-    else if (pend.key === 'KeyI') { speed = 12.5; clear = 3.1; tzBase = -10.2; label = 'Lob'; shotTol = 1.0; }
-    else                          { spin = -1; speed = 9.5; clear = 0.35; tzBase = -3.3; label = 'Drop Shot'; shotTol = 1.15; if (p.z > 9.5) penalty = 1.45; }
+    if (pend.key === 'KeyJ')      { spin = 1;  speed = 23.5; clear = 0.78; tzBase = -9.7;  label = `${fh} Top Spin`;   shotTol = 0.7;  shotType = 'topspin'; }
+    else if (pend.key === 'KeyK') { spin = -1; speed = 16.5; clear = 1.05; tzBase = -9.4;  label = `${fh} Slice`;      shotTol = 0.95; shotType = 'slice'; }
+    else if (pend.key === 'KeyL') { spin = 0;  speed = 27;   clear = 0.42; tzBase = -10.0; label = `${fh} Flat Drive`; shotTol = 1.5;  shotType = 'flat'; }
+    else if (pend.key === 'KeyI') { speed = 12.5; clear = 3.1; tzBase = -10.2; label = 'Lob';       shotTol = 1.0;  shotType = 'soft'; }
+    else                          { spin = -1; speed = 9.5; clear = 0.35; tzBase = -3.3; label = 'Drop Shot'; shotTol = 1.15; shotType = 'soft'; if (p.z > 9.5) penalty = 1.45; }
   }
   if (p.anim) {
     p.anim.type = animType;
@@ -259,7 +259,7 @@ function doPlayerHit() {
     preNoise: { tx: txPreNoise, tz: tzPreNoise },
     final: { tx, tz }, speed, spin, clear,
   });
-  hitBall(0, tx, tz, speed, spin, clear);
+  hitBall(0, tx, tz, speed, spin, clear, shotType);
   p.vx = clamp(p.vx + (b.x - p.x) * 2.0, -3, 3); p.vz *= 0.4;
   p.recover = Q.rec + (penalty > 1.3 ? 0.12 : 0);
   p.cool = 0.5; p.pending = null;

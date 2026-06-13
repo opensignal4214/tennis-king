@@ -42,6 +42,41 @@
       </div>
     </div>
   </div>
+
+  <!-- Doubles pre-match screens -->
+  <div id="matchtype" class="screen" style="display:none">
+    <div class="card">
+      <h2>Match Type</h2>
+      <p class="screensub">Choose your match format</p>
+      <button class="bigbtn" id="btn1v1">Singles — 1 vs 1<span class="d">Classic one-on-one match</span></button>
+      <button class="bigbtn" id="btn2v2">Doubles — 2 vs 2<span class="d">Team up with an AI partner against two opponents</span></button>
+    </div>
+  </div>
+
+  <div id="colorpick" class="screen" style="display:none">
+    <div class="card">
+      <h2>Pick Your Color</h2>
+      <p class="screensub">Choose your player color — your partner and opponents take the rest</p>
+      <div class="row" id="colorswatches"></div>
+    </div>
+  </div>
+
+  <div id="cointoss" class="screen" style="display:none">
+    <div class="card">
+      <h2>Coin Toss</h2>
+      <p class="screensub" id="ctprompt">Call the toss — heads or tails?</p>
+      <div class="row" id="ctchoice">
+        <button class="bigbtn ctbtn" id="btnheads">Heads</button>
+        <button class="bigbtn ctbtn" id="btntails">Tails</button>
+      </div>
+      <p id="ctresult" style="display:none;font-size:1.4em;font-weight:700;margin:0.6em 0"></p>
+      <div id="ctwinner" style="display:none">
+        <p class="screensub">You won the toss! Choose:</p>
+        <button class="bigbtn" id="btnserve">Serve First</button>
+        <button class="bigbtn" id="btnreceive">Receive First</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="js/main.js"></script>

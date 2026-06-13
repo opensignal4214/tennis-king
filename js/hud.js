@@ -1,4 +1,4 @@
-import { DIFF, PT_NAME } from './constants.js';
+import { DIFF, PT_NAME, COLORS } from './constants.js';
 import { G } from './state.js';
 import { servingPlayer } from './scoring.js';
 
@@ -53,9 +53,24 @@ export function refreshHUD() {
     return PT_NAME[Math.min(a, 3)];
   };
   const hist = i => s.setHist.map(h => h[i]).join(' ');
-  hudEl.innerHTML = `<table>
-    <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td></tr>
-    <tr><td class="nm">${sv === 0 ? '<span class="srv">●</span> ' : ''}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td></tr>
-    <tr><td class="nm">${sv === 1 ? '<span class="srv">●</span> ' : ''}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td></tr>
-  </table>`;
+  const dot = (col) => `<span style="display:inline-block;width:.65em;height:.65em;border-radius:50%;background:${col};vertical-align:middle;margin-right:.25em"></span>`;
+  if (G.matchType === 'doubles') {
+    const humanServes = sv < 2;
+    const cpuServes   = !humanServes;
+    const pc = COLORS[G.playerColor]?.shirt || '#2dd9c0';
+    const ptc = COLORS[G.partnerColor]?.shirt || '#4a90e2';
+    const nc = COLORS[G.npcColors?.[0]]?.shirt || '#ff6b57';
+    const n2c = COLORS[G.npcColors?.[1]]?.shirt || '#f5a623';
+    hudEl.innerHTML = `<table>
+      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td></tr>
+      <tr><td class="nm">${humanServes ? '<span class="srv">●</span> ' : ''}${dot(pc)}${dot(ptc)}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td></tr>
+      <tr><td class="nm">${cpuServes ? '<span class="srv">●</span> ' : ''}${dot(nc)}${dot(n2c)}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td></tr>
+    </table>`;
+  } else {
+    hudEl.innerHTML = `<table>
+      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td></tr>
+      <tr><td class="nm">${sv === 0 ? '<span class="srv">●</span> ' : ''}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td></tr>
+      <tr><td class="nm">${sv === 1 ? '<span class="srv">●</span> ' : ''}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td></tr>
+    </table>`;
+  }
 }

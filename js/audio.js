@@ -5,29 +5,24 @@ let AC = null, unlocked = false, keepAlive = null;
 export function ac() {
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
   if (!AC) return AC;
-  if (AC.state !== 'running') AC.resume(); // covers Safari 'suspended' AND 'interrupted'
-  // Safari/iOS only unlock audio output when a node is *started* inside a user
-  // gesture; resume() alone is not enough. Fire a 1-sample silent buffer the
-  // first time we're called (always from a keydown/click handler).
+  if (AC.state !== 'running') AC.resume();
   if (!unlocked) {
     try {
-      const buf = AC.createBuffer(1, 1, AC.sampleRate); // match context rate — Safari is picky
+      const buf = AC.createBuffer(1, 1, AC.sampleRate);
       const src = AC.createBufferSource();
       src.buffer = buf; src.connect(AC.destination); src.start(0);
       unlocked = true;
     } catch(e) {}
     startKeepAlive();
+    loadSounds();
   }
   return AC;
 }
 
-// A continuously looping silent source keeps Safari's audio output session alive.
-// Without it, Safari drops the page's WebAudio output after a stretch of quiet
-// and later sounds go silent until the browser is relaunched.
 function startKeepAlive() {
   if (keepAlive || !AC) return;
   try {
-    const buf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate); // 1s of zeros
+    const buf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
     const src = AC.createBufferSource();
     src.buffer = buf; src.loop = true;
     const g = AC.createGain(); g.gain.value = 0;
@@ -35,6 +30,55 @@ function startKeepAlive() {
     keepAlive = src;
   } catch(e) {}
 }
+
+// ---------------------------------------------------------------------------
+// WAV preloading
+// ---------------------------------------------------------------------------
+
+const SOUND_FILES = {
+  hit:          'sounds/hit.wav',
+  hit_flat:     'sounds/hit_flat.wav',
+  hit_topspin:  'sounds/hit_topspin.wav',
+  hit_slice:    'sounds/hit_slice.wav',
+  hit_soft:     'sounds/hit_soft.wav',
+  hit_smash:    'sounds/hit_smash.wav',
+  bounce:       'sounds/bounce.wav',
+  net:          'sounds/net.wav',
+  point_win:    'sounds/point_win.wav',
+  point_lose:   'sounds/point_lose.wav',
+  fault:        'sounds/fault.wav',
+};
+
+const buffers = {};
+let loadStarted = false;
+
+function loadSounds() {
+  if (loadStarted || !AC) return;
+  loadStarted = true;
+  for (const [key, path] of Object.entries(SOUND_FILES)) {
+    fetch(path)
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => AC.decodeAudioData(ab))
+      .then(decoded => { buffers[key] = decoded; })
+      .catch(() => {}); // silently fall back to synthesis
+  }
+}
+
+function playBuffer(key, gainVal = 1.0) {
+  if (!buffers[key] || !ac()) return false;
+  const src = AC.createBufferSource();
+  src.buffer = buffers[key];
+  const g = AC.createGain();
+  g.gain.value = gainVal;
+  src.connect(g).connect(AC.destination);
+  src.start(0);
+  src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e) {} };
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Synthesis fallbacks (used when WAV files haven't loaded yet)
+// ---------------------------------------------------------------------------
 
 export function tone(freq, dur, type, gain, slide) {
   if (G.mute || !ac()) return;
@@ -59,14 +103,52 @@ export function noiseBurst(dur, freq, gain, type, q) {
   src.onended = () => { try { src.disconnect(); f.disconnect(); g2.disconnect(); } catch(e) {} };
 }
 
-export const sHit    = p => { noiseBurst(0.045, 420 + p * 7, 0.5, 'bandpass', 0.7); tone(230 + p * 1.5, 0.07, 'sine', 0.08, 95); };
-export const sBounce = ()  => { noiseBurst(0.03, 350, 0.18, 'lowpass', 0.8); tone(110, 0.05, 'sine', 0.045, 70); };
-export const sNet    = ()  => { noiseBurst(0.1, 240, 0.25, 'lowpass', 0.7); tone(75, 0.13, 'sine', 0.05, 45); };
-export const sPoint  = w  => tone(w === 0 ? 520 : 230, 0.22, 'triangle', 0.05, w === 0 ? 780 : 150);
-export const sFault  = ()  => tone(200, 0.16, 'sawtooth', 0.035, 120);
+// ---------------------------------------------------------------------------
+// Public sound API
+// ---------------------------------------------------------------------------
 
-// Unlock/resume on any first gesture (Safari may not honor every gesture type),
-// and resume when returning to the tab (Safari interrupts backgrounded contexts).
+// shotType: 'flat' | 'topspin' | 'slice' | 'soft' | 'smash' | null (generic)
+export const sHit = (shotType, speed = 20) => {
+  if (G.mute) return;
+  const key = shotType ? `hit_${shotType}` : 'hit';
+  const gain = 0.65 + speed * 0.003;
+  if (!playBuffer(key, gain) && !playBuffer('hit', gain)) {
+    noiseBurst(0.045, 420 + speed * 7, 0.5, 'bandpass', 0.7);
+    tone(230 + speed * 1.5, 0.07, 'sine', 0.08, 95);
+  }
+};
+
+export const sBounce = () => {
+  if (G.mute) return;
+  if (!playBuffer('bounce', 0.65)) {
+    noiseBurst(0.03, 350, 0.18, 'lowpass', 0.8);
+    tone(110, 0.05, 'sine', 0.045, 70);
+  }
+};
+
+export const sNet    = () => {
+  if (G.mute) return;
+  if (!playBuffer('net', 0.7)) {
+    noiseBurst(0.1, 240, 0.25, 'lowpass', 0.7);
+    tone(75, 0.13, 'sine', 0.05, 45);
+  }
+};
+
+export const sPoint  = w => {
+  if (G.mute) return;
+  const key = w === 0 ? 'point_win' : 'point_lose';
+  if (!playBuffer(key, 0.6)) {
+    tone(w === 0 ? 520 : 230, 0.22, 'triangle', 0.05, w === 0 ? 780 : 150);
+  }
+};
+
+export const sFault  = () => {
+  if (G.mute) return;
+  if (!playBuffer('fault', 0.55)) {
+    tone(200, 0.16, 'sawtooth', 0.035, 120);
+  }
+};
+
 ['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev =>
   window.addEventListener(ev, () => ac(), { passive: true }));
 window.addEventListener('visibilitychange', () => { if (AC && AC.state !== 'running') AC.resume(); });

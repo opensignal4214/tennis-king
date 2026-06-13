@@ -8,6 +8,11 @@ import { servingPlayer, serveSide } from './scoring.js';
 import { endPoint, showGameOver } from './match.js';
 import { logPointStart, logEvent } from './logger.js';
 
+// Returns the entity object for the given server index (0=player,1=partner,2=npc,3=npc2)
+function serverEntity(sv) {
+  return sv === 0 ? G.player : sv === 1 ? G.partner : sv === 2 ? G.npc : G.npc2;
+}
+
 export function serveBoxBounds() {
   const side = serveSide();
   return side === 'deuce'
@@ -18,6 +23,10 @@ export function serveBoxBounds() {
 export function setupServe() {
   if (G.score && G.score.done) { showGameOver(); return; }
   const sv = servingPlayer(), side = serveSide();
+
+  if (G.matchType === 'doubles') { setupServeDoubles(sv, side); return; }
+
+  // ---- Singles (original logic) ----
   const b = G.ball, P = G.player, N = G.npc;
   N.netMode = false;
   let npcReceiveX = null;
@@ -63,6 +72,117 @@ export function setupServe() {
   refreshHUD();
 }
 
+function setupServeDoubles(sv, side) {
+  const b = G.ball;
+  const entities = [G.player, G.partner, G.npc, G.npc2];
+  const svEnt = entities[sv];
+  const svTeam = sv < 2 ? 0 : 1;
+
+  // Determine receiver entity index
+  const recvIdx = svTeam === 0
+    ? (G.receiveCpu === 0 ? 2 : 3)
+    : (G.receiveHuman === 0 ? 0 : 1);
+  const recvEnt = entities[recvIdx];
+
+  // Determine partner indices (teammate of server/receiver)
+  const svPartnerIdx = sv < 2 ? (sv === 0 ? 1 : 0) : (sv === 2 ? 3 : 2);
+  const recvPartnerIdx = recvIdx < 2 ? (recvIdx === 0 ? 1 : 0) : (recvIdx === 2 ? 3 : 2);
+  const svPartnerEnt = entities[svPartnerIdx];
+  const recvPartnerEnt = entities[recvPartnerIdx];
+
+  const isDeuce = side === 'deuce';
+  const d = DIFF[G.diffKey];
+
+  // Server lateral: deuce = +x for human team, deuce = -x for cpu team (mirrored courts)
+  const svSideX = svTeam === 0
+    ? (isDeuce ? 1.2 : -1.2)
+    : (isDeuce ? -1.2 : 1.2);
+  const svBaseZ  = svTeam === 0 ? 12.45 : -12.45;
+
+  // Receiver position — adaptive for NPC (reuse serve memory from human team)
+  let recvX;
+  if (svTeam === 0) {
+    const sgn = isDeuce ? -1 : 1;
+    const own = G.npcMem.serve[side], opp = G.npcMem.serve[side === 'deuce' ? 'ad' : 'deuce'];
+    const recs = [];
+    own.slice(-5).forEach(r => recs.push({ w: r.projX * sgn, k: r.w }));
+    opp.slice(-5).forEach(r => recs.push({ w: r.projX * -sgn, k: r.w * 0.5 }));
+    recvX = sgn * 2.4;
+    if (recs.length >= 2) {
+      let sw = 0, sx = 0; recs.forEach(r => { sw += r.k; sx += r.w * r.k; });
+      const wide = clamp(sx / sw, 0.4, 4.0);
+      const adapt = { easy: 0.35, medium: 0.55, hard: 0.75 }[G.diffKey];
+      recvX = sgn * (2.4 * (1 - adapt) + wide * adapt);
+    }
+    recvX = clamp(recvX, -4.2, 4.2);
+    const bb = serveBoxBounds();
+    G.srvAim = { x: clamp(G.srvAim.x, bb.x1, bb.x2), z: clamp(G.srvAim.z, bb.z1, bb.z2) };
+    if (G.srvAim.x < bb.x1 || G.srvAim.x > bb.x2) G.srvAim.x = (bb.x1 + bb.x2) / 2;
+  } else {
+    // CPU serves: human receiver goes to their deuce/ad side
+    recvX = isDeuce ? 2.0 : -2.0;
+  }
+  const recvBaseZ = svTeam === 0 ? -12.6 - d.retDepth : 12.6;
+
+  // Net positions: server's partner and receiver's partner go to net (opposite side from baseline partner)
+  const svNetX    =  -svSideX * 1.2;
+  const svNetZ    = svTeam === 0 ? 2.5 : -2.5;
+  const recvNetX  = -recvX * 0.6; // net player on the side diagonal from receiver
+  const recvNetZ  = svTeam === 0 ? -2.5 : 2.5;
+
+  // Place server
+  svEnt.x = svSideX; svEnt.z = svBaseZ;
+  svEnt.vx = svEnt.vz = 0; svEnt.recover = 0;
+  if (svEnt.pending !== undefined) svEnt.pending = null;
+
+  // Place server's partner at net
+  svPartnerEnt.x = svNetX; svPartnerEnt.z = svNetZ;
+  svPartnerEnt.vx = svPartnerEnt.vz = 0;
+  svPartnerEnt.netMode = true; svPartnerEnt.netX = svNetX;
+  if (svPartnerEnt.tgt) { svPartnerEnt.tgt.x = svNetX; svPartnerEnt.tgt.z = svNetZ; }
+
+  // Place receiver
+  recvEnt.x = recvX; recvEnt.z = recvBaseZ;
+  recvEnt.vx = recvEnt.vz = 0; recvEnt.netMode = false;
+  if (recvEnt.tgt) { recvEnt.tgt.x = recvX; recvEnt.tgt.z = recvBaseZ; }
+  if (recvEnt.pending !== undefined) recvEnt.pending = null;
+
+  // Place receiver's partner at net
+  recvPartnerEnt.x = recvNetX; recvPartnerEnt.z = recvNetZ;
+  recvPartnerEnt.vx = recvPartnerEnt.vz = 0;
+  recvPartnerEnt.netMode = true; recvPartnerEnt.netX = recvNetX;
+  if (recvPartnerEnt.tgt) { recvPartnerEnt.tgt.x = recvNetX; recvPartnerEnt.tgt.z = recvNetZ; }
+
+  // Reset anticipation for all; assign each entity a home court half from starting position
+  entities.forEach(e => { if (e) { e.antSide = 0; e.homeSide = e.x >= 0 ? 1 : -1; } });
+  if (G.npc) { G.npc.plan = null; }
+  if (G.npc2) { G.npc2.plan = null; }
+  G.cpuHitter = null;
+
+  // Ball
+  b.active = false; b.held = true; b.trail.length = 0;
+  const dom = svTeam === 0 ? 1 : -1;
+  b.x = svEnt.x - dom * 0.22; b.y = 1.3; b.z = svEnt.z;
+  b.vx = b.vy = b.vz = 0; b.spin = 0; b.netHit = false; b.isServe = false; b.bounces = 0;
+  G.rally = 0; G.strike = null;
+  G.state = 'serve';
+
+  // Auto-serve timer: human player (sv=0) uses spacebar; all others auto-serve
+  G.serveT = sv === 0 ? Infinity : rnd(1.0, 1.8);
+
+  logPointStart({ server: sv, serveSide: side, npcReceiveX: recvEnt.x });
+  hintEl.style.display = 'block';
+  if (sv === 0) {
+    hintEl.innerHTML = (G.mode === 'rally' ? '' : `${G.serveNum === 1 ? '1st' : '2nd'} serve · ${side} court — `)
+      + '<b>WASD</b> move · <b>Shift+WASD</b> aim · <b>SPACE</b> toss · strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat';
+  } else if (svTeam === 0) {
+    hintEl.innerHTML = 'Your partner is serving — get ready';
+  } else {
+    hintEl.innerHTML = 'CPU to serve — get ready';
+  }
+  refreshHUD();
+}
+
 export function startToss(by) {
   if (G.state !== 'serve') return;
   G.state = 'toss'; G.toss = { t: 0, by, hit: false };
@@ -75,7 +195,7 @@ export function strikeServe(type) {
   if (!t || t.hit) return;
   if (t.t < 0.20) { fb('Wait for the toss', '#e0a05a'); return; }
   t.hit = true;
-  const tol = (SERVE_TYPE[type || 'flat'].tol) || 1; // flat = tighter window, kick = more forgiving
+  const tol = (SERVE_TYPE[type || 'flat'].tol) || 1;
   const err = Math.abs(t.t - TOSS_APEX);
   const q = err <= 0.045 * tol ? 'perfect' : err <= 0.10 * tol ? 'good' : err <= 0.18 * tol ? 'ok' : 'weak';
   fb(QUAL[q].label, QUAL[q].col);
@@ -85,13 +205,15 @@ export function strikeServe(type) {
 export function fireServe(sv, q, contactY, type) {
   const b = G.ball, d = DIFF[G.diffKey];
   G.toss = null;
-  if (sv === 1 && !type) {
+  // All non-human serves (partner, npc, npc2) pick type automatically
+  if (sv !== 0 && !type) {
     type = G.serveNum === 2 ? (Math.random() < 0.7 ? 'kick' : 'slice')
          : (Math.random() < 0.6 ? 'flat' : Math.random() < 0.6 ? 'slice' : 'kick');
   }
   const ST = SERVE_TYPE[type || 'flat'];
   const safety = ST.spin !== 0 ? 0.75 : 1;
-  // Timing-based serve fault (player only): a mistimed flat serve is genuinely risky.
+  const svTeam = sv < 2 ? 0 : 1;
+  const svEnt = serverEntity(sv);
   const serveFault = sv === 0 && ST.fault && Math.random() < (ST.fault[q] || 0);
   let speed, sx, tx, tz;
   if (sv === 0) {
@@ -102,41 +224,55 @@ export function fireServe(sv, q, contactY, type) {
     speed = d.srv * (G.serveNum === 1 ? 1 : 0.8) * rnd(0.95, 1.03) * ST.m;
     sx = d.srvNoise * (G.serveNum === 1 ? 1 : 0.6) * safety;
     const side = serveSide();
-    const bx = side === 'deuce' ? [0.3, 3.85] : [-3.85, -0.3];
+    // svTeam===0 (partner) serves from human side to CPU court (z<0), mirrored x-ranges
+    // svTeam===1 (npc/npc2) serves from CPU side to human court (z>0), standard x-ranges
+    const bx = svTeam === 0
+      ? (side === 'deuce' ? [-3.85, -0.3] : [0.3, 3.85])
+      : (side === 'deuce' ? [0.3, 3.85]   : [-3.85, -0.3]);
     if (Math.random() < d.open * 0.6) {
       tx = Math.random() < 0.5 ? (bx[0] < 0 ? bx[0] + 0.35 : bx[1] - 0.35) : (bx[0] < 0 ? bx[1] - 0.35 : bx[0] + 0.35);
     } else tx = rnd(bx[0] + 0.6, bx[1] - 0.6);
-    tz = rnd(3.6, 5.7);
+    tz = svTeam === 0 ? -rnd(3.6, 5.7) : rnd(3.6, 5.7);
   }
-  const curve = ST.curve * (sv === 0 ? -1 : 1);
+  const curve = ST.curve * (svTeam === 0 ? -1 : 1);
   let ax = tx + gauss() * sx, az = tz + gauss() * 0.5 * (sv === 0 ? QUAL[q].noise * 0.8 * safety : 1);
   b.held = false; b.active = true;
-  b.x = (sv === 0 ? G.player.x : G.npc.x) + (sv === 0 ? 0.25 : -0.25);
-  b.y = contactY || 2.9; b.z = sv === 0 ? G.player.z : G.npc.z;
+  b.x = svEnt.x + (svTeam === 0 ? 0.25 : -0.25);
+  b.y = contactY || 2.9; b.z = svEnt.z;
   if (curve) {
     const Test = Math.hypot(ax - b.x, az - b.z) / speed;
     ax -= 0.5 * curve * Test * Test;
   }
   if (serveFault) {
-    if (Math.random() < 0.5) ax = (serveSide() === 'deuce' ? -5.0 : 5.0); // wide of the sideline
-    else az = -7.6;                                                         // long, past service line (SVC = 6.4)
+    if (Math.random() < 0.5) ax = (serveSide() === 'deuce' ? -5.0 : 5.0);
+    else az = -7.6;
   }
   const g = GRAV * (1 + 0.22 * ST.spin);
   const v = solveShot(b.x, b.y, b.z, ax, az, speed, g, Math.max(ST.clr, G.serveNum === 2 ? 0.12 : 0));
   b.vx = v.vx; b.vy = v.vy; b.vz = v.vz; b.spin = ST.spin; b.curve = curve;
-  b.lastHitter = sv; b.bounces = 0; b.isServe = true; b.netHit = false;
+  b.lastHitter = svTeam; // team index (0=human-team, 1=cpu-team)
+  G.lastHitterEntity = sv;
+  b.bounces = 0; b.isServe = true; b.netHit = false;
   G.state = 'live';
   G.rally = 1;
-  if (sv === 0) { G.npc.reactT = d.react * 0.5; G.npc.plan = null; G.player.recover = 0.45; showShot(ST.label); }
-  else G.npc.recover = 0.45;
+  if (svTeam === 0) {
+    G.npc.reactT = d.react * 0.5; G.npc.plan = null;
+    if (G.npc2) { G.npc2.reactT = d.react * 0.5; G.npc2.plan = null; }
+    svEnt.recover = 0.45;
+    showShot(ST.label);
+  } else {
+    svEnt.recover = 0.45;
+    if (G.player) G.player.recover = 0;
+    if (G.partner) G.partner.recover = 0;
+  }
   logEvent('serve', {
     server: sv, serveNum: G.serveNum, q, type: type || 'flat',
     speed, target: { tx, tz }, aim: { ax, az }, curve, contactY: b.y,
     predicted: predictLanding(),
   });
-  sHit(speed); refreshHUD();
-  const ent = sv === 0 ? G.player : G.npc;
-  ent.anim = { t: 0.18, side: sv === 0 ? 1 : -1, type: 'serve' };
+  const serveSoundType = type === 'kick' ? 'topspin' : (type === 'slice' ? 'slice' : 'flat');
+  sHit(serveSoundType, speed); refreshHUD();
+  svEnt.anim = { t: 0.18, side: svTeam === 0 ? 1 : -1, type: 'serve' };
 }
 
 export function fault() {
@@ -154,7 +290,8 @@ export function fault() {
     wait(1.4, setupServe);
   } else {
     G.serveNum = 1;
-    endPoint(1 - sv, 'Double Fault');
+    const winTeam = sv < 2 ? 1 : 0; // opposite team wins on double fault
+    endPoint(winTeam, 'Double Fault');
   }
 }
 
@@ -165,10 +302,14 @@ export function wait(t, fn) {
 export function updateToss(dt) {
   if (G.state !== 'toss' || !G.toss) return;
   const t = G.toss; t.t += dt;
-  const sv = t.by, dom = sv === 0 ? 1 : -1, phT = Math.min(1, t.t / 0.5);
+  const sv = t.by;
+  const svEnt = serverEntity(sv);
+  const svTeam = sv < 2 ? 0 : 1;
+  const dom = svTeam === 0 ? 1 : -1;
+  const phT = Math.min(1, t.t / 0.5);
   G.ball.held = true; G.ball.active = false;
-  G.ball.x = (sv === 0 ? G.player.x : G.npc.x) - dom * 0.22 + dom * 0.4 * phT;
-  G.ball.z = (sv === 0 ? G.player.z : G.npc.z) + (sv === 0 ? -0.3 : 0.3) * phT;
+  G.ball.x = svEnt.x - dom * 0.22 + dom * 0.4 * phT;
+  G.ball.z = svEnt.z + (svTeam === 0 ? -0.3 : 0.3) * phT;
   G.ball.y = Math.max(1.0, tossY(t.t));
   if (!t.hit && t.t > 1.15) {
     G.toss = null; G.state = 'serve';
@@ -177,4 +318,3 @@ export function updateToss(dt) {
     else G.serveT = 0.4;
   }
 }
-

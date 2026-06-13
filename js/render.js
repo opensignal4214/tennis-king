@@ -1,4 +1,4 @@
-import { W, H, CX, CY, FOC, NETX, PRESS_LEAD, TOSS_APEX, HL, SW, DW, SVC, CHARGE_FULL } from './constants.js';
+import { W, H, CX, CY, FOC, NETX, PRESS_LEAD, TOSS_APEX, HL, SW, DW, SVC, CHARGE_FULL, COLORS } from './constants.js';
 import { G } from './state.js';
 import { clamp, lerp, netHeight } from './utils.js';
 import { proj } from './camera.js';
@@ -192,15 +192,31 @@ function drawFb() {
   ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 }
 
-function drawChar(e, isNpc) {
+// Returns the visual entity index (0-3) for the server, accounting for singles (0/1) vs doubles (0-3)
+function getServingEntityIdx() {
+  const sv = servingPlayer();
+  if (G.matchType === 'doubles') return sv;
+  return sv === 0 ? 0 : 2; // singles: 0=player(entityIdx 0), 1=NPC(entityIdx 2)
+}
+function getTossingEntityIdx() {
+  if (!G.toss) return -1;
+  const by = G.toss.by;
+  if (G.matchType === 'doubles') return by;
+  return by === 0 ? 0 : 2; // singles: 0=player, 1=NPC→entityIdx 2
+}
+
+// entityIdx: 0=player, 1=partner, 2=npc, 3=npc2
+function drawChar(e, colorKey, entityIdx) {
   const pf = proj(e.x,0,e.z), ph = proj(e.x,1.82,e.z);
   if (!pf||!ph) return;
   const s = pf.s, yAt = h => pf.y + (ph.y - pf.y) * (h / 1.82);
-  const skin = '#e9b98c', shirt = isNpc ? '#ff6b57' : '#2dd9c0', shorts = isNpc ? '#7e2c20' : '#0e5f54';
+  const c = COLORS[colorKey] || COLORS.teal;
+  const skin = '#e9b98c', shirt = c.shirt, shorts = c.shorts;
   drawShadow(e.x, e.z, 0.42, 0.35);
   ctx.lineCap = 'round';
-  const fwd = isNpc ? 1 : -1;
-  const dom = isNpc ? -1 : 1;
+  const isHuman = entityIdx < 2;
+  const fwd = isHuman ? -1 : 1;
+  const dom = isHuman ? 1 : -1;
   const b = G.ball;
   const spd = e.spd || 0, stride = e.stride || 0;
   const amp = Math.min(0.3, 0.03 + spd*0.055);
@@ -218,7 +234,7 @@ function drawChar(e, isNpc) {
     fb2 = { x: e.x - dirx*sw1*stepLen - px1*0.13, z: e.z - dirz*sw1*stepLen - pz1*0.13, l: Math.max(0,-cw1)*amp*0.9 };
   } else { fa = { x: e.x-0.16, z: e.z, l:0 }; fb2 = { x: e.x+0.16, z: e.z, l:0 }; }
   const fpA = proj(fa.x, fa.l, fa.z), fpB = proj(fb2.x, fb2.l, fb2.z);
-  const lean = clamp((isNpc ? (e.lvx||0) : (e.vx||0)) * 0.05, -0.18, 0.18) * s;
+  const lean = clamp(((e.lvx !== undefined ? e.lvx : 0) || e.vx || 0) * 0.05, -0.18, 0.18) * s;
   ctx.strokeStyle = '#1d2b38'; ctx.lineWidth = Math.max(2, s*0.085);
   if (fpA) { ctx.beginPath(); ctx.moveTo(pf.x-s*0.1, yAt(0.8)); ctx.lineTo(fpA.x, fpA.y); ctx.stroke(); }
   if (fpB) { ctx.beginPath(); ctx.moveTo(pf.x+s*0.1, yAt(0.8)); ctx.lineTo(fpB.x, fpB.y); ctx.stroke(); }
@@ -230,15 +246,15 @@ function drawChar(e, isNpc) {
     ctx.beginPath(); ctx.moveTo(pf.x+lean*0.4, yAt(0.97)); ctx.lineTo(pf.x+lean, yAt(1.45)); ctx.stroke();
     ctx.fillStyle = skin;
     ctx.beginPath(); ctx.arc(pf.x+lean, yAt(1.62), Math.max(2.5, s*0.13), 0, 7); ctx.fill();
-    ctx.fillStyle = isNpc ? '#3a2417' : '#222a30';
+    ctx.fillStyle = isHuman ? '#222a30' : '#3a2417';
     ctx.beginPath(); ctx.arc(pf.x+lean, yAt(1.67), Math.max(2.5, s*0.125), Math.PI, Math.PI*2); ctx.fill();
   };
 
   const KF = (A, B, u) => [lerp(A[0],B[0],u), lerp(A[1],B[1],u), lerp(A[2],B[2],u)];
   const a = e.anim;
-  const tossing  = (G.state === 'toss'  && G.toss && G.toss.by === (isNpc ? 1 : 0));
-  const preServe = (G.state === 'serve' && servingPlayer() === (isNpc ? 1 : 0));
-  let H2, T, off = null, two = false;
+  const tossing  = (G.state === 'toss'  && G.toss && getTossingEntityIdx() === entityIdx);
+  const preServe = (G.state === 'serve' && getServingEntityIdx() === entityIdx);
+  let H2, T, off = null, two = false, E = null, shoulderTurn = 0;
   if (tossing) {
     const u = clamp(G.toss.t / 0.45, 0, 1);
     H2 = [dom*0.32, 1.42, -fwd*0.3]; T = [dom*0.42, 2.0, -fwd*0.5];
@@ -247,7 +263,7 @@ function drawChar(e, isNpc) {
     H2 = [dom*0.3, 1.05, fwd*0.2]; T = [dom*0.36, 1.55, fwd*0.32];
     off = [-dom*0.24, 1.26, fwd*0.08];
   } else if (a) {
-    const sd = a.side, fh = isNpc ? sd < 0 : sd > 0;
+    const sd = a.side, fh = !isHuman ? sd < 0 : sd > 0;
     two = !fh && a.type === 'ground';
     const c = a.contact;
     if (a.type === 'smash' || a.type === 'serve') {
@@ -273,27 +289,72 @@ function drawChar(e, isNpc) {
       off = [-sd*0.35,1.22,fwd*0.1];
     } else {
       const t = a.t;
-      // two-handed backhand keeps hands tucked closer to the torso (rch),
-      // while the racket tip still reaches the ball at contact.
       const rch = two ? 0.66 : 1.0;
-      const Kb=[sd*0.48*rch,0.95,-fwd*0.42], KbT=[sd*0.8*rch,1.05,-fwd*0.68];
-      const Kc =c?[c[0]*0.6*rch,Math.max(0.78,c[1]-0.18),c[2]*0.6*rch]:[sd*0.55*rch,1.0,fwd*0.4];
-      const KcT=c?c:[sd*1.0,1.05,fwd*0.62];
-      const Kf=[-sd*0.28*rch,1.5,fwd*0.4], KfT=[-sd*0.55,1.75,fwd*0.28];
-      if (a.charging) { H2=Kb; T=KbT; }
-      else if (t<0.04) { H2=Kb; T=KbT; }
-      else if (t<0.10) { const u=(t-0.04)/0.06, uu=u*u; H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); }
-      else { const u=Math.min(1,(t-0.10)/0.6), uo=1-(1-u)*(1-u); H2=KF(Kc,Kf,uo); T=KF(KcT,KfT,uo); }
-      if (!two) off=[-sd*0.45,1.25,fwd*0.25];
+      if (fh) {
+        // Forehand: unit turn on take-back, racket drops below hand (eastern grip),
+        // explosive swing through contact, full wrap-around follow-through.
+        const Kb  = [sd*0.58, 0.88, -fwd*0.52];
+        const KbT = [sd*0.90, 0.68, -fwd*0.74];
+        const KbE = [sd*0.60, 0.80, -fwd*0.16];
+        const Kc  = c ? [c[0]*0.58, Math.max(0.85,c[1]-0.18), c[2]*0.55] : [sd*0.52, 1.05, fwd*0.16];
+        const KcT = c ? c : [sd*0.80, 1.10, fwd*0.40];
+        const KcE = [sd*0.50, 0.90, fwd*0.02];
+        const Kf  = [-sd*0.40, 1.80, fwd*0.36];
+        const KfT = [-sd*0.58, 1.90, fwd*0.50];
+        const KfE = [-sd*0.08, 1.56, fwd*0.28];
+        if (a.charging) {
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          off = [-sd*0.38, 1.32, -fwd*0.14];
+        } else if (t<0.04) {
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          off = [-sd*0.38, 1.32, -fwd*0.14];
+        } else if (t<0.10) {
+          const u=(t-0.04)/0.06, uu=u*u;
+          H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu);
+          shoulderTurn = lerp(-sd*0.30, 0, uu);
+          off = KF([-sd*0.38,1.32,-fwd*0.14], [-sd*0.35,1.20,fwd*0.04], uu);
+        } else {
+          const u=Math.min(1,(t-0.10)/0.55), uo=1-(1-u)*(1-u);
+          H2=KF(Kc,Kf,uo); T=KF(KcT,KfT,uo); E=KF(KcE,KfE,uo);
+          shoulderTurn = lerp(0, sd*0.35, uo);
+          // off arm opens outward for counter-rotation balance
+          off = KF([-sd*0.35,1.20,fwd*0.04], [-sd*0.52,1.44,fwd*0.46], uo);
+        }
+      } else {
+        // Backhand: shoulder coil toward ball side, higher finish than before.
+        const Kb  = [sd*0.48*rch, 0.90, -fwd*0.48];
+        const KbT = [sd*0.82*rch, 1.00, -fwd*0.70];
+        const KbE = [sd*0.40*rch, 0.82, -fwd*0.22];
+        const Kc  = c ? [c[0]*0.60*rch, Math.max(0.78,c[1]-0.18), c[2]*0.60*rch] : [sd*0.52*rch, 1.00, fwd*0.40];
+        const KcT = c ? c : [sd*1.0, 1.05, fwd*0.62];
+        const KcE = [sd*0.32*rch, 0.88, fwd*0.18];
+        const Kf  = [-sd*0.28*rch, 1.65, fwd*0.44];
+        const KfT = [-sd*0.52, 1.84, fwd*0.30];
+        const KfE = [-sd*0.10*rch, 1.46, fwd*0.32];
+        if (a.charging) {
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=sd*0.24;
+        } else if (t<0.04) {
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=sd*0.24;
+        } else if (t<0.10) {
+          const u=(t-0.04)/0.06, uu=u*u;
+          H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu);
+          shoulderTurn = lerp(sd*0.24, 0, uu);
+        } else {
+          const u=Math.min(1,(t-0.10)/0.55), uo=1-(1-u)*(1-u);
+          H2=KF(Kc,Kf,uo); T=KF(KcT,KfT,uo); E=KF(KcE,KfE,uo);
+          shoulderTurn = lerp(0, -sd*0.30, uo);
+        }
+        if (!two) off = [-sd*0.45, 1.25, fwd*0.25];
+      }
     }
   } else {
     let antSide = 0;
     if (G.state === 'live' && !b.held) {
-      if (!isNpc && b.lastHitter===1 && G.strike && G.strike.t<0.7) antSide = e.antSide||0;
-      if (isNpc && b.lastHitter===0 && b.z<2 && Math.hypot(b.x-e.x,b.z-e.z)<7) antSide = e.antSide||0;
+      if (isHuman && b.lastHitter===1 && G.strike && G.strike.t<0.7) antSide = e.antSide||0;
+      if (!isHuman && b.lastHitter===0 && b.z<2 && Math.hypot(b.x-e.x,b.z-e.z)<7) antSide = e.antSide||0;
     }
     if (antSide) {
-      const fh = isNpc ? antSide < 0 : antSide > 0;
+      const fh = !isHuman ? antSide < 0 : antSide > 0;
       two = !fh;
       H2 = [antSide*0.42,0.98,-fwd*0.32]; T = [antSide*0.7,1.08,-fwd*0.58];
       if (!two) off = [-antSide*0.4,1.2,fwd*0.2];
@@ -303,7 +364,9 @@ function drawChar(e, isNpc) {
   }
   const hp = proj(e.x+H2[0],H2[1],e.z+H2[2]), tp = proj(e.x+T[0],T[1],e.z+T[2]);
   if (!hp||!tp) { drawBody(); return; }
-  hp.x += lean; // hand tracks the torso lean so the arm doesn't stretch when running (tip stays on the ball)
+  hp.x += lean;
+  const ep = E ? proj(e.x+E[0], E[1], e.z+E[2]) : null;
+  if (ep) ep.x += lean;
 
   const drawArms = () => {
     if (a && a.t < 0.5) { (e._tt||(e._tt=[])).push({x:tp.x,y:tp.y}); if(e._tt.length>7)e._tt.shift(); }
@@ -313,14 +376,23 @@ function drawChar(e, isNpc) {
       ctx.beginPath(); ctx.moveTo(e._tt[0].x,e._tt[0].y);
       e._tt.forEach(q => ctx.lineTo(q.x,q.y)); ctx.stroke();
     }
-    const shL = { x: pf.x-s*0.18+lean, y: yAt(1.42) }, shR = { x: pf.x+s*0.18+lean, y: yAt(1.42) };
+    // shoulderTurn > 0 = right shoulder forward (toward net); shifts shoulder screen-y
+    const yTurn = shoulderTurn * s * 0.10;
+    const shL = { x: pf.x-s*0.18+lean, y: yAt(1.42) + yTurn };
+    const shR = { x: pf.x+s*0.18+lean, y: yAt(1.42) - yTurn };
     ctx.strokeStyle = skin; ctx.lineWidth = Math.max(2, s*0.075);
     if (two) {
-      ctx.beginPath(); ctx.moveTo(shL.x,shL.y); ctx.lineTo(hp.x,hp.y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(shR.x,shR.y); ctx.lineTo(hp.x,hp.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(shL.x,shL.y);
+      if (ep) ctx.lineTo(ep.x,ep.y);
+      ctx.lineTo(hp.x,hp.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(shR.x,shR.y);
+      if (ep) ctx.lineTo(ep.x,ep.y);
+      ctx.lineTo(hp.x,hp.y); ctx.stroke();
     } else {
       const domSh = (H2[0] >= 0) ? shR : shL;
-      ctx.beginPath(); ctx.moveTo(domSh.x,domSh.y); ctx.lineTo(hp.x,hp.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(domSh.x,domSh.y);
+      if (ep) ctx.lineTo(ep.x,ep.y);
+      ctx.lineTo(hp.x,hp.y); ctx.stroke();
       if (off) { const op = proj(e.x+off[0],off[1],e.z+off[2]);
         if (op) { op.x += lean; const oSh = (off[0] >= 0) ? shR : shL;
           ctx.beginPath(); ctx.moveTo(oSh.x,oSh.y); ctx.lineTo(op.x,op.y); ctx.stroke(); } }
@@ -354,11 +426,24 @@ export function render() {
   ctx.clearRect(0,0,W,H);
   drawCourt();
   drawAimMarker();
-  drawChar(G.npc, true);
+
+  // Build entity list — doubles adds partner (idx 1) and npc2 (idx 3)
+  const allEntities = [
+    { e: G.npc, ck: G.npcColors[0], idx: 2 },
+    ...(G.matchType === 'doubles' && G.npc2 ? [{ e: G.npc2, ck: G.npcColors[1], idx: 3 }] : []),
+    ...(G.matchType === 'doubles' && G.partner ? [{ e: G.partner, ck: G.partnerColor, idx: 1 }] : []),
+    { e: G.player, ck: G.playerColor, idx: 0 },
+  ].sort((a, b) => a.e.z - b.e.z); // ascending z = furthest from camera first (painter's algo)
+
+  const behindNet = allEntities.filter(({ e }) => e.z < 0);
+  const inFront   = allEntities.filter(({ e }) => e.z >= 0);
+
+  behindNet.forEach(({ e, ck, idx }) => drawChar(e, ck, idx));
   if (G.ball.z < 0) drawBall();
   drawNet();
   if (G.ball.z >= 0) { drawBall(); drawServeRing(); }
-  drawChar(G.player, false);
+  inFront.forEach(({ e, ck, idx }) => drawChar(e, ck, idx));
+
   if (G.state === 'live') drawChargeIndicator();
   drawFb();
   const v = ctx.createRadialGradient(CX,H*0.55,H*0.45,CX,H*0.55,H*0.95);

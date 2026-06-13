@@ -1,4 +1,12 @@
 export const W=960, H=600, CX=480, CY=212, FOC=560;
+export const COLORS={
+  teal:  {shirt:'#2dd9c0',shorts:'#0e5f54'},
+  coral: {shirt:'#ff6b57',shorts:'#7e2c20'},
+  cobalt:{shirt:'#4a90e2',shorts:'#1a3a6b'},
+  amber: {shirt:'#f5a623',shorts:'#7a4e00'},
+  violet:{shirt:'#9b59b6',shorts:'#4a235a'},
+};
+export const COLOR_KEYS=['teal','coral','cobalt','amber','violet'];
 export const HL=11.885, SW=4.115, DW=5.485, SVC=6.4, NETX=5.2;
 export const GRAV=9.81;
 export const PT_NAME=['0','15','30','40'];

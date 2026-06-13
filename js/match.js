@@ -44,20 +44,35 @@ export function startGame(mode) {
   G.mode = mode; G.started = true; G.paused = false;
   G.score = mode === 'match' ? newScore() : null;
   logMatchStart();
-  G.stats = [0, 0]; G.server = 0; G.serveNum = 1; G.rally = 0; G.bestRally = 0;
+  G.stats = [0, 0]; G.serveNum = 1; G.rally = 0; G.bestRally = 0;
+  // In doubles, G.server is derived from G.serveOrder; in singles always start at 0
+  if (G.matchType !== 'doubles') { G.server = 0; G.matchType = 'singles'; G.partner = null; G.npc2 = null; }
+  if (mode === 'rally') { G.matchType = 'singles'; G.partner = null; G.npc2 = null; G.server = 0; }
   G.srvAim = { x: -2.05, z: -4.6 };
   G.npcMem = { serve: { deuce: [], ad: [] }, lastServeRec: null, rallyX: 0 };
   $('menu').style.display = 'none';
   $('overTxt').style.display = 'none';
   G.state = 'point';
-  showMsg(mode === 'match' ? 'Match Play' : 'Rally Mode',
-          mode === 'match' ? 'best of 3 sets — you serve first' : 'keep it going as long as you can', 1.6);
+  const isDoubles = G.matchType === 'doubles';
+  const servesFirst = isDoubles ? (G.serveOrder[0] < 2 ? 'you' : 'CPU') : 'you';
+  showMsg(
+    isDoubles ? 'Doubles Match' : mode === 'match' ? 'Match Play' : 'Rally Mode',
+    isDoubles
+      ? `best of 3 sets · ${servesFirst} serve first`
+      : mode === 'match' ? 'best of 3 sets — you serve first' : 'keep it going as long as you can',
+    1.6
+  );
   G.pointT = 1.7; G.next = setupServe;
   refreshHUD();
 }
 
 export function openMenu() {
   G.paused = true;
+  // Hide any open pre-match overlay screens
+  ['matchtype', 'colorpick', 'cointoss'].forEach(s => {
+    const el = document.getElementById(s);
+    if (el) el.style.display = 'none';
+  });
   $('menu').style.display = 'flex';
   $('resumeBtn').style.display = G.started ? 'block' : 'none';
   hintEl.style.display = 'none';

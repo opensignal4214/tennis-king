@@ -6,9 +6,22 @@ export function newScore() {
   return { pts:[0,0], games:[0,0], sets:[0,0], setHist:[], tb:false, tbPts:[0,0], tbStart:0, done:false, winner:null };
 }
 
+// Returns entity index: 0=player, 1=partner, 2=npc, 3=npc2 (or 0/1 in singles)
 export function servingPlayer() {
   const s = G.score;
   if (G.mode === 'rally' || !s) return 0;
+  if (G.matchType === 'doubles') {
+    if (s.tb) {
+      // Doubles tiebreak: teams alternate every 2 points (first team serves 1, then 2, 2...)
+      const n = s.tbPts[0] + s.tbPts[1];
+      const teamTurn = (Math.floor((n + 1) / 2) % 2) ? 1 - s.tbStart : s.tbStart;
+      // Find first entity in serveOrder belonging to teamTurn
+      for (const e of G.serveOrder) {
+        if ((e < 2 ? 0 : 1) === teamTurn) return e;
+      }
+    }
+    return G.serveOrder[G.serveOrderIdx % G.serveOrder.length];
+  }
   if (s.tb) {
     const n = s.tbPts[0] + s.tbPts[1];
     return (Math.floor((n + 1) / 2) % 2) ? 1 - s.tbStart : s.tbStart;
@@ -35,6 +48,26 @@ export function winSetCheck(w, m) {
   }
 }
 
+function advanceServeRotation(w) {
+  if (G.matchType === 'doubles') {
+    G.serveOrderIdx++;
+    // Advance receive rotation for the team that is now receiving
+    const nextServer = G.serveOrder[G.serveOrderIdx % G.serveOrder.length];
+    const servingTeam = nextServer < 2 ? 0 : 1;
+    if (servingTeam === 0) {
+      // Human team serves → CPU team receives, advance CPU receiver
+      G.receiveCpu ^= 1;
+    } else {
+      // CPU team serves → Human team receives, advance human receiver
+      G.receiveHuman ^= 1;
+    }
+    // Keep G.server in sync with team for legacy code
+    G.server = servingTeam;
+  } else {
+    G.server = 1 - G.server;
+  }
+}
+
 export function addPoint(w) {
   const s = G.score, o = 1 - w, m = [];
   if (s.tb) {
@@ -43,18 +76,24 @@ export function addPoint(w) {
       s.games[w]++; m.push(`Game ${name(w)}`);
       const wasStart = s.tbStart; s.tb = false;
       winSetCheck(w, m);
-      G.server = 1 - wasStart;
+      if (G.matchType === 'doubles') {
+        advanceServeRotation(w);
+      } else {
+        G.server = 1 - wasStart;
+      }
     } else m.push(`Tiebreak ${s.tbPts[servingPlayer()]} – ${s.tbPts[1 - servingPlayer()]}`);
   } else {
     s.pts[w]++;
     const a = s.pts[w], b = s.pts[o];
     if (a >= 4 && a - b >= 2) {
       s.pts = [0, 0]; s.games[w]++; m.push(`Game ${name(w)}`);
-      winSetCheck(w, m); G.server = 1 - G.server;
+      winSetCheck(w, m); advanceServeRotation(w);
     } else if (a >= 3 && b >= 3) {
       m.push(a === b ? 'Deuce' : `Advantage ${name(a > b ? w : o)}`);
     } else {
-      m.push(`${PT_NAME[s.pts[G.server]]} – ${PT_NAME[s.pts[1 - G.server]]}`);
+      const sv = servingPlayer();
+      const svTeam = G.matchType === 'doubles' ? (sv < 2 ? 0 : 1) : sv;
+      m.push(`${PT_NAME[s.pts[svTeam]]} – ${PT_NAME[s.pts[1 - svTeam]]}`);
     }
   }
   return m.join('  ·  ');

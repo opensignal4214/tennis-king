@@ -1,4 +1,4 @@
-import { GRAV, DIFF, SW, HL, SVC } from './constants.js';
+import { GRAV, DIFF, SW, DW, HL, SVC } from './constants.js';
 import { G } from './state.js';
 import { clamp, netHeight } from './utils.js';
 import { sHit, sBounce, sNet } from './audio.js';
@@ -9,19 +9,23 @@ import { fault } from './serve.js';
 import { endPoint } from './match.js';
 import { logEvent } from './logger.js';
 
-export function hitBall(hitter, tx, tz, speed, spin, clear) {
+export function hitBall(hitter, tx, tz, speed, spin, clear, shotType) {
   const b = G.ball;
   const g = GRAV * (1 + 0.22 * spin);
   const v = solveShot(b.x, b.y, b.z, tx, tz, speed, g, clear);
   b.vx = v.vx; b.vy = v.vy; b.vz = v.vz; b.spin = spin; b.curve = 0;
   b.lastHitter = hitter; b.bounces = 0; b.isServe = false; b.netHit = false;
   G.rally++;
-  if (hitter === 0) { G.npc.reactT = DIFF[G.diffKey].react; G.npc.plan = null; G.strike = null; }
+  if (hitter === 0) {
+    G.npc.reactT = DIFF[G.diffKey].react; G.npc.plan = null;
+    if (G.npc2) { G.npc2.reactT = DIFF[G.diffKey].react; G.npc2.plan = null; }
+    G.strike = null;
+  }
   logEvent('hit', {
-    hitter, target: { tx, tz }, speed, spin, clear, rally: G.rally,
+    hitter, target: { tx, tz }, speed, spin, clear, shotType, rally: G.rally,
     v: { vx: v.vx, vy: v.vy, vz: v.vz }, predicted: predictLanding(),
   });
-  sHit(speed);
+  sHit(shotType, speed);
   refreshHUD();
 }
 
@@ -84,7 +88,8 @@ function groundEvent(b) {
   sBounce();
   if (G.state === 'live') {
     const side = b.z >= 0 ? 0 : 1;
-    const inCourt = Math.abs(b.x) <= SW + 0.07 && Math.abs(b.z) <= HL + 0.07;
+    const halfW = G.matchType === 'doubles' ? DW : SW;
+    const inCourt = Math.abs(b.x) <= halfW + 0.07 && Math.abs(b.z) <= HL + 0.07;
     logEvent('bounce', {
       side, inCourt, isServe: b.isServe, bounceN: b.bounces,
       serveBoxOK: (b.isServe && b.bounces === 0) ? serveBoxOK(b) : null,
@@ -102,7 +107,7 @@ function groundEvent(b) {
       } else { applyBounce(b); fault(); return; }
     } else if (b.bounces === 0) {
       if (b.lastHitter === 0 && side === 1 && inCourt)
-        G.npcMem.rallyX = G.npcMem.rallyX * 0.75 + b.x * 0.25;
+        G.npcMem.rallyX = G.npcMem.rallyX * 0.65 + b.x * 0.35;
       if (b.netHit) { applyBounce(b); endPoint(1 - b.lastHitter, b.lastHitter === 0 ? 'Net!' : 'CPU nets it'); return; }
       if (side === b.lastHitter) { applyBounce(b); endPoint(1 - b.lastHitter, 'Net!'); return; }
       if (!inCourt) { applyBounce(b); endPoint(1 - b.lastHitter, b.lastHitter === 0 ? 'Out!' : 'CPU hits it out'); return; }

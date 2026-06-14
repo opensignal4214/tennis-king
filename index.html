@@ -10,12 +10,13 @@
 <div id="wrap">
   <canvas id="cv" width="960" height="600"></canvas>
   <div class="overlay">
-    <div id="help"><b>WASD</b> move + aim (<b>A/D</b> direction, <b>W</b> deep, <b>S</b> short) &nbsp;·&nbsp; <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat · <b>;</b> drop shot · <b>I</b> lob — net play &amp; overheads are automatic &nbsp;·&nbsp; <b>SPACE</b> toss → strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat &nbsp;·&nbsp; <b>M</b> sound · <b>G</b> save log · <b>Esc</b> menu</div>
+    <div id="help"><b>WASD</b> move + aim (<b>A/D</b> direction, <b>W</b> deep, <b>S</b> short) &nbsp;·&nbsp; <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat · <b>;</b> drop shot · <b>I</b> lob — net play &amp; overheads are automatic &nbsp;·&nbsp; <b>Serve:</b> <b>J/K/L</b> to toss · press again at the top to strike (J=top spin · K=slice · L=flat) &nbsp;·&nbsp; <b>M</b> sound · <b>G</b> save log · <b>Esc</b> menu</div>
     <div id="hud"></div>
     <div id="rallyhud"></div>
     <div id="servehint"></div>
     <div id="msg"><span id="msgMain"></span><span class="sub" id="msgSub"></span></div>
     <div id="shotlbl"></div>
+    <div id="gamepadStatus"></div>
   </div>
   <div id="menu">
     <div class="card">
@@ -37,7 +38,7 @@
         <b>Right hand</b> strokes (home row): J = top spin · K = slice · L = flat · ; = drop shot · I = lob.<br>
         At the net the same keys volley; against a high ball they hit an overhead. Your position, the incoming ball, and your timing decide the shot.<br>
         <b>Timing:</b> a ring closes on the incoming ball — swing when it's green. Mistimed swings go weak, wide, or long.<br>
-        <b>Serve:</b> WASD places the target anywhere in the box, SPACE tosses, then strike near the top of the toss —
+        <b>Serve:</b> WASD places the target anywhere in the box, then press <b>J / K / L</b> to toss — press the same key again at the top of the toss to strike:
         J = top spin (slower, safe, bounces high) · K = slice (curves wide, stays low) · L = flat (fastest).
       </div>
     </div>

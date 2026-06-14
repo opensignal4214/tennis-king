@@ -1,6 +1,7 @@
 import { W, H, CX, CY, FOC, NETX, PRESS_LEAD, TOSS_APEX, HL, SW, DW, SVC, CHARGE_FULL, COLORS } from './constants.js';
 import { G } from './state.js';
 import { clamp, lerp, netHeight } from './utils.js';
+import { facingAngle, bodyAnchors } from './facing.js';
 import { proj } from './camera.js';
 import { servingPlayer } from './scoring.js';
 import { predictLanding } from './physics.js';
@@ -345,49 +346,107 @@ function drawChar(e, colorKey, entityIdx) {
   // Foot A wires to the left hip; keep its stance offset pointing screen-left so the legs don't
   // cross when moving toward the net (where the raw perpendicular would flip to screen-right).
   if (px1 > 0) { px1 = -px1; pz1 = -pz1; }
-  let fa, fb2;
+  // Body facing: groundstrokes rotate the whole body side-on (¾ turn) and step the near foot
+  // forward. bodyAnchors (js/facing.js, unit-tested) places every joint in world space for
+  // this facing, so the upper and lower body share one facing and stay attached.
+  const face = facingAngle(e.anim, isHuman);
+  const lean = clamp(((e.lvx !== undefined ? e.lvx : 0) || e.vx || 0) * 0.03, -0.10, 0.10) * s;
+  const A = bodyAnchors(e, face, fwd);
+  // Project a world joint, applying a fraction `ln` of the body lean. Lean ramps 0 at the
+  // planted feet → full at the shoulders so the body leans as one piece without detaching.
+  const PJ = (pt, ln, fx, fy) => { const p = proj(pt.x, pt.y, pt.z); if (!p) return { x: fx, y: fy }; p.x += ln; return p; };
+  const Lsh = PJ(A.shoulderL, lean,     pf.x-s*0.20+lean,     yAt(1.45));
+  const Rsh = PJ(A.shoulderR, lean,     pf.x+s*0.20+lean,     yAt(1.45));
+  const Lhip= PJ(A.hipL,      lean*0.4, pf.x-s*0.13+lean*0.4, yAt(0.97));
+  const Rhip= PJ(A.hipR,      lean*0.4, pf.x+s*0.13+lean*0.4, yAt(0.97));
+  const Lhb = PJ(A.hipBL,     lean*0.2, pf.x-s*0.11+lean*0.2, yAt(0.78));
+  const Rhb = PJ(A.hipBR,     lean*0.2, pf.x+s*0.11+lean*0.2, yAt(0.78));
+  // Feet: running uses the stride gait; otherwise the (turned) resting stance from bodyAnchors.
+  let fpA, fpB;
   if (spd > 0.25) {
-    fa  = { x: e.x + dirx*sw1*stepLen + px1*0.13, z: e.z + dirz*sw1*stepLen + pz1*0.13, l: Math.max(0, cw1)*amp*0.9 };
-    fb2 = { x: e.x - dirx*sw1*stepLen - px1*0.13, z: e.z - dirz*sw1*stepLen - pz1*0.13, l: Math.max(0,-cw1)*amp*0.9 };
-  } else { fa = { x: e.x-0.16, z: e.z, l:0 }; fb2 = { x: e.x+0.16, z: e.z, l:0 }; }
-  const fpA = proj(fa.x, fa.l, fa.z), fpB = proj(fb2.x, fb2.l, fb2.z);
-  const lean = clamp(((e.lvx !== undefined ? e.lvx : 0) || e.vx || 0) * 0.05, -0.18, 0.18) * s;
-  ctx.strokeStyle = '#1d2b38'; ctx.lineWidth = Math.max(2, s*0.085);
-  if (fpA) { ctx.beginPath(); ctx.moveTo(pf.x-s*0.1, yAt(0.8)); ctx.lineTo(fpA.x, fpA.y); ctx.stroke(); }
-  if (fpB) { ctx.beginPath(); ctx.moveTo(pf.x+s*0.1, yAt(0.8)); ctx.lineTo(fpB.x, fpB.y); ctx.stroke(); }
+    const faM = { x: e.x + dirx*sw1*stepLen + px1*0.13, z: e.z + dirz*sw1*stepLen + pz1*0.13, l: Math.max(0, cw1)*amp*0.9 };
+    const fbM = { x: e.x - dirx*sw1*stepLen - px1*0.13, z: e.z - dirz*sw1*stepLen - pz1*0.13, l: Math.max(0,-cw1)*amp*0.9 };
+    fpA = proj(faM.x, faM.l, faM.z); fpB = proj(fbM.x, fbM.l, fbM.z);
+  } else {
+    fpA = proj(A.footA.x, 0, A.footA.z); fpB = proj(A.footB.x, 0, A.footB.z);
+  }
+  // Legs: filled tapered quads from each (rotated, lean-matched) lower-hip down to its foot,
+  // so the legs stay joined to the shorts and turn with the body.
+  ctx.fillStyle = '#1d2b38';
+  const legQuad = (tx, ty, bx, by) => {
+    const dx = bx - tx, dy = by - ty, L = Math.hypot(dx, dy) || 1;
+    const nx = -dy / L, ny = dx / L;                 // unit perpendicular to the leg
+    const wT = Math.max(2, s*0.07), wB = Math.max(1.5, s*0.05);
+    ctx.beginPath();
+    ctx.moveTo(tx + nx*wT, ty + ny*wT);
+    ctx.lineTo(tx - nx*wT, ty - ny*wT);
+    ctx.lineTo(bx - nx*wB, by - ny*wB);
+    ctx.lineTo(bx + nx*wB, by + ny*wB);
+    ctx.closePath(); ctx.fill();
+  };
+  if (fpA) legQuad(Lhb.x, Lhb.y, fpA.x, fpA.y);
+  if (fpB) legQuad(Rhb.x, Rhb.y, fpB.x, fpB.y);
   // Shoes
   ctx.fillStyle = '#ddd8cc';
   if (fpA) { ctx.beginPath(); ctx.ellipse(fpA.x, fpA.y, Math.max(2.5, s*0.105), Math.max(1.4, s*0.042), 0, 0, 7); ctx.fill(); }
   if (fpB) { ctx.beginPath(); ctx.ellipse(fpB.x, fpB.y, Math.max(2.5, s*0.105), Math.max(1.4, s*0.042), 0, 0, 7); ctx.fill(); }
 
   const drawBody = () => {
-    ctx.strokeStyle = shorts; ctx.lineWidth = Math.max(3, s*0.24);
-    ctx.beginPath(); ctx.moveTo(pf.x, yAt(0.74)); ctx.lineTo(pf.x+lean*0.4, yAt(0.97)); ctx.stroke();
-    ctx.strokeStyle = shirt; ctx.lineWidth = Math.max(3, s*0.26);
-    ctx.beginPath(); ctx.moveTo(pf.x+lean*0.4, yAt(0.97)); ctx.lineTo(pf.x+lean, yAt(1.45)); ctx.stroke();
+    // Shorts: filled panel from waist (hips, 0.97) to lower hips (0.78), rotated by facing.
+    // Top edge = torso bottom (Lhip/Rhip) for a seamless join.
+    ctx.fillStyle = shorts;
+    ctx.beginPath();
+    ctx.moveTo(Lhip.x, Lhip.y); ctx.lineTo(Rhip.x, Rhip.y);
+    ctx.lineTo(Rhb.x, Rhb.y);   ctx.lineTo(Lhb.x, Lhb.y);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+    ctx.beginPath();
+    ctx.moveTo((Lhip.x+Rhip.x)/2, (Lhip.y+Rhip.y)/2); ctx.lineTo(Rhip.x, Rhip.y);
+    ctx.lineTo(Rhb.x, Rhb.y); ctx.lineTo((Lhb.x+Rhb.x)/2, (Lhb.y+Rhb.y)/2);
+    ctx.closePath(); ctx.fill();
+    // Torso: filled shirt panel from shoulders (1.45) to waist (0.97), rotated by facing.
+    // At face=0 this is the front trapezoid; turned, the back shoulder recedes in depth.
+    ctx.fillStyle = shirt;
+    ctx.beginPath();
+    ctx.moveTo(Lsh.x, Lsh.y);   ctx.lineTo(Rsh.x, Rsh.y);
+    ctx.lineTo(Rhip.x, Rhip.y); ctx.lineTo(Lhip.x, Lhip.y);
+    ctx.closePath(); ctx.fill();
+    // Flat shade on the right-side panel — the two-tone low-poly look
+    ctx.fillStyle = 'rgba(0,0,0,0.16)';
+    ctx.beginPath();
+    ctx.moveTo((Lsh.x+Rsh.x)/2, (Lsh.y+Rsh.y)/2); ctx.lineTo(Rsh.x, Rsh.y);
+    ctx.lineTo(Rhip.x, Rhip.y); ctx.lineTo((Lhip.x+Rhip.x)/2, (Lhip.y+Rhip.y)/2);
+    ctx.closePath(); ctx.fill();
+    // Anchor the head to the projected shoulder midpoint (not the foot column): the perspective
+    // projection couples screen-x with height via depth, so a foot-anchored head drifts sideways
+    // proportional to the player's court offset. Riding the shoulders keeps it centered on the torso.
+    const headX = (Lsh.x + Rsh.x) / 2;
     ctx.fillStyle = skin;
-    ctx.beginPath(); ctx.arc(pf.x+lean, yAt(1.62), Math.max(2.5, s*0.13), 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(headX, yAt(1.62), Math.max(2.5, s*0.13), 0, 7); ctx.fill();
     ctx.fillStyle = isHuman ? '#222a30' : '#3a2417';
-    ctx.beginPath(); ctx.arc(pf.x+lean, yAt(1.67), Math.max(2.5, s*0.125), Math.PI, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(headX, yAt(1.67), Math.max(2.5, s*0.125), Math.PI, Math.PI*2); ctx.fill();
   };
 
   const KF = (A, B, u) => [lerp(A[0],B[0],u), lerp(A[1],B[1],u), lerp(A[2],B[2],u)];
   const a = e.anim;
   const tossing  = (G.state === 'toss'  && G.toss && getTossingEntityIdx() === entityIdx);
   const preServe = (G.state === 'serve' && getServingEntityIdx() === entityIdx);
-  let H2, T, off = null, two = false, E = null, shoulderTurn = 0;
+  let H2, T, off = null, two = false, E = null, Eo = null, shoulderTurn = 0, domInFront = false;
   if (tossing) {
     const u = clamp(G.toss.t / 0.45, 0, 1);
     H2 = [dom*0.32, 1.42, -fwd*0.3]; T = [dom*0.42, 2.0, -fwd*0.5];
     off = [-dom*0.22, lerp(1.15, 1.95, Math.min(1, u*1.3)), fwd*0.12];
+    domInFront = true;
   } else if (preServe) {
     H2 = [dom*0.3, 1.05, fwd*0.2]; T = [dom*0.36, 1.55, fwd*0.32];
     off = [-dom*0.24, 1.26, fwd*0.08];
+    domInFront = true;
   } else if (a) {
     const sd = a.side, fh = !isHuman ? sd < 0 : sd > 0;
     two = !fh && a.type === 'ground';
     const c = a.contact;
     if (a.type === 'smash' || a.type === 'serve') {
+      domInFront = true;
       const t = a.t;
       const He = c ? [c[0]*0.5, Math.max(1.5, c[1]-0.6), c[2]*0.5] : [dom*0.1, 1.9, fwd*0.2];
       const Te = c ? c : [dom*0.04, 2.2, fwd*0.45];
@@ -405,6 +464,8 @@ function drawChar(e, colorKey, entityIdx) {
       const u = Math.min(1, a.t/0.06);
       // Use actual contact side so the arm never crosses to the wrong side
       const cSide = c ? (Math.sign(c[0]) || sd) : sd;
+      const fhV = !isHuman ? cSide < 0 : cSide > 0;
+      domInFront = !fhV;
       const He = c ? [c[0]*0.6, Math.max(1.0,c[1]-0.15), c[2]*0.6] : [cSide*0.55,1.18,fwd*0.5];
       // Constrain tip to 75% of contact offset to prevent shaft elongation on stretch volleys
       const Te = c ? [c[0]*0.75, Math.max(0.95,c[1]-0.1), c[2]*0.75] : [cSide*0.78,1.32,fwd*0.72];
@@ -415,11 +476,12 @@ function drawChar(e, colorKey, entityIdx) {
       const t = a.t;
       const rch = two ? 0.66 : 1.0;
       if (fh) {
+        domInFront = false;
         // Forehand: unit turn on take-back, racket drops below hand (eastern grip),
         // explosive swing through contact, full wrap-around follow-through.
-        const Kb  = [sd*0.50, 0.98, -fwd*0.32];
-        const KbT = [sd*0.68, 0.80, -fwd*0.46];
-        const KbE = [sd*0.42, 0.94, -fwd*0.18];
+        const Kb  = [sd*0.38, 1.00, -fwd*0.30];
+        const KbT = [sd*0.54, 0.86, -fwd*0.42];
+        const KbE = [sd*0.30, 0.96, -fwd*0.16];
         const Kc  = c ? [c[0]*0.58, Math.max(0.85,c[1]-0.18), c[2]*0.55] : [sd*0.52, 1.05, fwd*0.16];
         const KcT = c ? c : [sd*0.80, 1.10, fwd*0.40];
         const KcE = [sd*0.50, 0.90, fwd*0.02];
@@ -427,11 +489,11 @@ function drawChar(e, colorKey, entityIdx) {
         const KfT = [-sd*0.42, 2.08, fwd*0.46];
         const KfE = [-sd*0.08, 1.56, fwd*0.28];
         if (a.charging) {
-          H2=Kb; T=KbT; shoulderTurn=-sd*0.30;
-          off = [-sd*0.38, 1.32, -fwd*0.14];
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          off = [-sd*0.26, 1.26, fwd*0.28];
         } else if (t<0.04) {
-          H2=Kb; T=KbT; shoulderTurn=-sd*0.30;
-          off = [-sd*0.38, 1.32, -fwd*0.14];
+          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          off = [-sd*0.26, 1.26, fwd*0.28];
         } else if (t<0.10) {
           const u=(t-0.04)/0.06, uu=u*u;
           H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu);
@@ -445,27 +507,33 @@ function drawChar(e, colorKey, entityIdx) {
           off = KF([-sd*0.35,1.20,fwd*0.04], [-sd*0.52,1.44,fwd*0.46], uo);
         }
       } else {
+        domInFront = true;
         // Backhand: shoulder coil toward ball side, higher finish than before.
         const Kb  = [sd*0.40*rch, 0.96, -fwd*0.28];
         const KbT = [sd*0.62*rch, 1.02, -fwd*0.44];
         const KbE = [sd*0.34*rch, 0.88, -fwd*0.14];
         const Kc  = c ? [c[0]*0.60*rch, Math.max(0.78,c[1]-0.18), c[2]*0.60*rch] : [sd*0.52*rch, 1.00, fwd*0.40];
         const KcT = c ? c : [sd*1.0, 1.05, fwd*0.62];
-        const KcE = [sd*0.32*rch, 0.88, fwd*0.18];
+        const KcE = [sd*0.44*rch, 0.94, fwd*0.30];
         const Kf  = [-sd*0.28*rch, 1.65, fwd*0.44];
         const KfT = [-sd*0.52, 1.84, fwd*0.30];
         const KfE = [-sd*0.10*rch, 1.46, fwd*0.32];
+        // Off (left/top) hand elbow — tucked near the torso so the rear arm reads as a second
+        // hand on the grip instead of routing through the dominant elbow.
+        const KbEo = [sd*0.14*rch, 0.92, -fwd*0.06];
+        const KcEo = [sd*0.30*rch, 0.98, fwd*0.30];
+        const KfEo = [-sd*0.04*rch, 1.34, fwd*0.16];
         if (a.charging) {
-          H2=Kb; T=KbT; shoulderTurn=sd*0.24;
+          H2=Kb; T=KbT; E=KbE; Eo=KbEo; shoulderTurn=sd*0.24;
         } else if (t<0.04) {
-          H2=Kb; T=KbT; shoulderTurn=sd*0.24;
+          H2=Kb; T=KbT; E=KbE; Eo=KbEo; shoulderTurn=sd*0.24;
         } else if (t<0.10) {
           const u=(t-0.04)/0.06, uu=u*u;
-          H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu);
+          H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu); Eo=KF(KbEo,KcEo,uu);
           shoulderTurn = lerp(sd*0.24, 0, uu);
         } else {
           const u=Math.min(1,(t-0.10)/0.55), uo=1-(1-u)*(1-u);
-          H2=KF(Kc,Kf,uo); T=KF(KcT,KfT,uo); E=KF(KcE,KfE,uo);
+          H2=KF(Kc,Kf,uo); T=KF(KcT,KfT,uo); E=KF(KcE,KfE,uo); Eo=KF(KcEo,KfEo,uo);
           shoulderTurn = lerp(0, -sd*0.30, uo);
         }
         if (!two) off = [-sd*0.45, 1.25, fwd*0.25];
@@ -480,10 +548,12 @@ function drawChar(e, colorKey, entityIdx) {
     if (antSide) {
       const fh = !isHuman ? antSide < 0 : antSide > 0;
       two = !fh;
+      domInFront = !fh;
       H2 = [antSide*0.42,0.98,-fwd*0.32]; T = [antSide*0.7,1.08,-fwd*0.58];
       if (!two) off = [-antSide*0.4,1.2,fwd*0.2];
     } else {
       H2 = [dom*0.14,1.02,fwd*0.32]; T = [dom*0.12,1.4,fwd*0.52]; two = true;
+      domInFront = true;
     }
   }
   const hp = proj(e.x+H2[0],H2[1],e.z+H2[2]), tp = proj(e.x+T[0],T[1],e.z+T[2]);
@@ -491,8 +561,30 @@ function drawChar(e, colorKey, entityIdx) {
   hp.x += lean;
   const ep = E ? proj(e.x+E[0], E[1], e.z+E[2]) : null;
   if (ep) ep.x += lean;
+  const epOff = Eo ? proj(e.x+Eo[0], Eo[1], e.z+Eo[2]) : null;
+  if (epOff) epOff.x += lean;
 
-  const drawArms = () => {
+  const shL = Lsh, shR = Rsh;
+  const domSh = dom > 0 ? shR : shL;
+  const offSh = dom > 0 ? shL : shR;
+  const wSh = Math.max(2, s*0.055), wEl = Math.max(1.8, s*0.05), wHa = Math.max(1.5, s*0.04);
+  const seg = (ax, ay, bx, by, wa, wb) => {
+    const dx = bx-ax, dy = by-ay, L = Math.hypot(dx,dy)||1, nx = -dy/L, ny = dx/L;
+    ctx.beginPath();
+    ctx.moveTo(ax+nx*wa, ay+ny*wa);
+    ctx.lineTo(bx+nx*wb, by+ny*wb);
+    ctx.lineTo(bx-nx*wb, by-ny*wb);
+    ctx.lineTo(ax-nx*wa, ay-ny*wa);
+    ctx.closePath(); ctx.fill();
+  };
+  const joint = (x, y, r) => { ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); };
+  const drawArm = (sx, sy, elb) => {
+    ctx.fillStyle = skin;
+    joint(sx, sy, wSh);
+    if (elb) { seg(sx,sy,elb.x,elb.y,wSh,wEl); joint(elb.x,elb.y,wEl); seg(elb.x,elb.y,hp.x,hp.y,wEl,wHa); }
+    else seg(sx,sy,hp.x,hp.y,wSh,wHa);
+  };
+  const drawTrail = () => {
     if (a && a.t < 0.5) { (e._tt||(e._tt=[])).push({x:tp.x,y:tp.y}); if(e._tt.length>7)e._tt.shift(); }
     else if (e._tt && e._tt.length) e._tt.length = 0;
     if (e._tt && e._tt.length > 2) {
@@ -500,39 +592,16 @@ function drawChar(e, colorKey, entityIdx) {
       ctx.beginPath(); ctx.moveTo(e._tt[0].x,e._tt[0].y);
       e._tt.forEach(q => ctx.lineTo(q.x,q.y)); ctx.stroke();
     }
-    // shoulderTurn > 0 = right shoulder forward (toward net); shifts shoulder screen-y
-    const yTurn = shoulderTurn * s * 0.10;
-    const shL = { x: pf.x-s*0.18+lean, y: yAt(1.42) + yTurn };
-    const shR = { x: pf.x+s*0.18+lean, y: yAt(1.42) - yTurn };
-    ctx.strokeStyle = skin; ctx.lineWidth = Math.max(2, s*0.075);
-    if (two) {
-      ctx.beginPath(); ctx.moveTo(shL.x,shL.y);
-      if (ep) ctx.lineTo(ep.x,ep.y);
-      ctx.lineTo(hp.x,hp.y); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(shR.x,shR.y);
-      if (ep) ctx.lineTo(ep.x,ep.y);
-      ctx.lineTo(hp.x,hp.y); ctx.stroke();
-    } else {
-      const domSh = dom > 0 ? shR : shL;
-      const offSh = dom > 0 ? shL : shR;
-      ctx.beginPath(); ctx.moveTo(domSh.x,domSh.y);
-      if (ep) ctx.lineTo(ep.x,ep.y);
-      ctx.lineTo(hp.x,hp.y); ctx.stroke();
-      if (off) { const op = proj(e.x+off[0],off[1],e.z+off[2]);
-        if (op) { op.x += lean;
-          ctx.beginPath(); ctx.moveTo(offSh.x,offSh.y); ctx.lineTo(op.x,op.y); ctx.stroke(); } }
-    }
+  };
+  const drawRacket = () => {
     const ang = Math.atan2(tp.y-hp.y, tp.x-hp.x);
-    // Racket shaft
     ctx.strokeStyle = '#caa36a'; ctx.lineWidth = Math.max(1.5, tp.s*0.05);
     ctx.beginPath(); ctx.moveTo(hp.x,hp.y); ctx.lineTo(tp.x,tp.y); ctx.stroke();
-    // Racket head: larger oval with string grid
     const hx = tp.x + Math.cos(ang)*tp.s*0.15, hy = tp.y + Math.sin(ang)*tp.s*0.15;
     const headRx = Math.max(3.5, tp.s*0.155), headRy = Math.max(2.2, tp.s*0.10);
     ctx.fillStyle = 'rgba(215,228,240,0.22)';
     ctx.strokeStyle = '#dfe8ef'; ctx.lineWidth = Math.max(1.5, tp.s*0.05);
     ctx.beginPath(); ctx.ellipse(hx,hy,headRx,headRy,ang,0,7); ctx.fill(); ctx.stroke();
-    // String lines
     const perp = ang + Math.PI/2;
     const cxa = Math.cos(ang), cya = Math.sin(ang), cxp = Math.cos(perp), cyp = Math.sin(perp);
     ctx.strokeStyle = 'rgba(255,255,255,0.30)'; ctx.lineWidth = Math.max(0.5, tp.s*0.018);
@@ -551,9 +620,89 @@ function drawChar(e, colorKey, entityIdx) {
       ctx.stroke();
     }
   };
+  const drawOffArm = () => {
+    if (!off) return;
+    const op = proj(e.x+off[0], off[1], e.z+off[2]); if (!op) return;
+    op.x += lean; ctx.fillStyle = skin;
+    seg(offSh.x, offSh.y, op.x, op.y, wSh, wHa); joint(op.x, op.y, wHa);
+  };
 
-  if ((H2[2] + T[2]) / 2 < -0.06) { drawArms(); drawBody(); }
-  else { drawBody(); drawArms(); }
+  const isGround = !!(a && a.type === 'ground');
+  const bhTwo = isGround && two;
+  const fhOne = isGround && !two;
+  // H2[2] > 0: hand on camera side (behind avatar) → draw after body = visible.
+  // H2[2] ≤ 0: hand on net side (in front of avatar's chest) → draw before body = occluded.
+  const domCamSide = H2[2] > 0;
+  const offCamSide = off !== null && off[2] > 0;
+  if (bhTwo) {
+    drawTrail();
+    if (domCamSide) {
+      // take-back: both hands behind avatar (camera side) → arms visible over body
+      drawBody();
+      drawArm(offSh.x, offSh.y, epOff);
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+    } else {
+      // contact/finish: both hands in front of chest (net side) → body occludes arms
+      drawArm(offSh.x, offSh.y, epOff);
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+      drawBody();
+    }
+  } else if (fhOne) {
+    drawTrail();
+    if (domCamSide && offCamSide) {
+      // both camera side (early swing transition): both visible
+      drawBody();
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+      drawOffArm();
+    } else if (domCamSide && !offCamSide) {
+      // take-back: dom camera (visible), off net (hidden)
+      drawOffArm(); drawBody();
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+    } else if (!domCamSide && offCamSide) {
+      // dom net (hidden), off camera (visible)
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+      drawBody();
+      drawOffArm();
+    } else {
+      // contact/finish: both net side → body occludes both arms
+      drawArm(domSh.x, domSh.y, ep);
+      ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      drawRacket();
+      drawOffArm(); drawBody();
+    }
+  } else {
+    // Serve, smash, volley, idle: independent z-depth per arm
+    const drawDomArms = () => {
+      if (two) {
+        drawArm(shL.x, shL.y, ep); drawArm(shR.x, shR.y, ep);
+        ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      } else {
+        drawArm(domSh.x, domSh.y, ep);
+        ctx.fillStyle = skin; joint(hp.x, hp.y, wHa);
+      }
+      drawRacket();
+    };
+    drawTrail();
+    if (domCamSide && offCamSide) {
+      drawBody(); drawDomArms(); drawOffArm();
+    } else if (domCamSide && !offCamSide) {
+      drawOffArm(); drawBody(); drawDomArms();
+    } else if (!domCamSide && offCamSide) {
+      drawDomArms(); drawBody(); drawOffArm();
+    } else {
+      drawDomArms(); drawOffArm(); drawBody();
+    }
+  }
 }
 
 function drawAimMarker() {

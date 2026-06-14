@@ -1,0 +1,1066 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for serve.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="prettify.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="index.html">All files</a> serve.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/302</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/302</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a>
+<a name='L299'></a><a href='#L299'>299</a>
+<a name='L300'></a><a href='#L300'>300</a>
+<a name='L301'></a><a href='#L301'>301</a>
+<a name='L302'></a><a href='#L302'>302</a>
+<a name='L303'></a><a href='#L303'>303</a>
+<a name='L304'></a><a href='#L304'>304</a>
+<a name='L305'></a><a href='#L305'>305</a>
+<a name='L306'></a><a href='#L306'>306</a>
+<a name='L307'></a><a href='#L307'>307</a>
+<a name='L308'></a><a href='#L308'>308</a>
+<a name='L309'></a><a href='#L309'>309</a>
+<a name='L310'></a><a href='#L310'>310</a>
+<a name='L311'></a><a href='#L311'>311</a>
+<a name='L312'></a><a href='#L312'>312</a>
+<a name='L313'></a><a href='#L313'>313</a>
+<a name='L314'></a><a href='#L314'>314</a>
+<a name='L315'></a><a href='#L315'>315</a>
+<a name='L316'></a><a href='#L316'>316</a>
+<a name='L317'></a><a href='#L317'>317</a>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a>
+<a name='L326'></a><a href='#L326'>326</a>
+<a name='L327'></a><a href='#L327'>327</a>
+<a name='L328'></a><a href='#L328'>328</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { GRAV, DIFF, QUAL, SRV_SPEED, SERVE_TYPE, TOSS_APEX } from './constants.js';<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >import { G } from './state.js';</span>
+<span class="cstat-no" title="statement not covered" >import { clamp, rnd, gauss, tossY } from './utils.js';</span>
+<span class="cstat-no" title="statement not covered" >import { tone, sHit, sFault } from './audio.js';</span>
+<span class="cstat-no" title="statement not covered" >import { solveShot, predictLanding } from './physics.js';</span>
+<span class="cstat-no" title="statement not covered" >import { hintEl, showMsg, showShot, fb, refreshHUD } from './hud.js';</span>
+<span class="cstat-no" title="statement not covered" >import { servingPlayer, serveSide } from './scoring.js';</span>
+<span class="cstat-no" title="statement not covered" >import { endPoint, showGameOver } from './match.js';</span>
+<span class="cstat-no" title="statement not covered" >import { logPointStart, logEvent } from './logger.js';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >// Returns the entity object for the given server index.</span>
+<span class="cstat-no" title="statement not covered" >// Doubles: 0=player,1=partner,2=npc,3=npc2. Singles: 0=player,1=npc.</span>
+<span class="cstat-no" title="statement not covered" >function serverEntity(sv) {</span>
+<span class="cstat-no" title="statement not covered" >  if (G.matchType !== 'doubles') return sv === 0 ? G.player : G.npc;</span>
+<span class="cstat-no" title="statement not covered" >  return sv === 0 ? G.player : sv === 1 ? G.partner : sv === 2 ? G.npc : G.npc2;</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function serveBoxBounds() {</span>
+<span class="cstat-no" title="statement not covered" >  const side = serveSide();</span>
+<span class="cstat-no" title="statement not covered" >  return side === 'deuce'</span>
+<span class="cstat-no" title="statement not covered" >    ? { x1: -3.85, x2: -0.25, z1: -6.0, z2: -1.0 }</span>
+<span class="cstat-no" title="statement not covered" >    : { x1:  0.25, x2:  3.85, z1: -6.0, z2: -1.0 };</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function setupServe() {</span>
+<span class="cstat-no" title="statement not covered" >  if (G.score &amp;&amp; G.score.done) { showGameOver(); return; }</span>
+<span class="cstat-no" title="statement not covered" >  const sv = servingPlayer(), side = serveSide();</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (G.matchType === 'doubles') { setupServeDoubles(sv, side); return; }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // ---- Singles (original logic) ----</span>
+<span class="cstat-no" title="statement not covered" >  const b = G.ball, P = G.player, N = G.npc;</span>
+<span class="cstat-no" title="statement not covered" >  N.netMode = false;</span>
+<span class="cstat-no" title="statement not covered" >  let npcReceiveX = null;</span>
+<span class="cstat-no" title="statement not covered" >  if (sv === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    P.x = side === 'deuce' ? 1.2 : -1.2; P.z = 12.45;</span>
+<span class="cstat-no" title="statement not covered" >    const sgn = side === 'deuce' ? -1 : 1;</span>
+<span class="cstat-no" title="statement not covered" >    const own = G.npcMem.serve[side], opp = G.npcMem.serve[side === 'deuce' ? 'ad' : 'deuce'];</span>
+<span class="cstat-no" title="statement not covered" >    const recs = [];</span>
+<span class="cstat-no" title="statement not covered" >    own.slice(-5).forEach(r =&gt; recs.push({ w: r.projX * sgn, k: r.w }));</span>
+<span class="cstat-no" title="statement not covered" >    opp.slice(-5).forEach(r =&gt; recs.push({ w: r.projX * -sgn, k: r.w * 0.5 }));</span>
+<span class="cstat-no" title="statement not covered" >    let rx = sgn * 2.4;</span>
+<span class="cstat-no" title="statement not covered" >    if (recs.length &gt;= 2) {</span>
+<span class="cstat-no" title="statement not covered" >      let sw = 0, sx = 0; recs.forEach(r =&gt; { sw += r.k; sx += r.w * r.k; });</span>
+<span class="cstat-no" title="statement not covered" >      const wide = clamp(sx / sw, 0.4, 4.0);</span>
+<span class="cstat-no" title="statement not covered" >      const adapt = { easy: 0.35, medium: 0.55, hard: 0.75 }[G.diffKey];</span>
+<span class="cstat-no" title="statement not covered" >      rx = sgn * (2.4 * (1 - adapt) + wide * adapt);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    N.x = clamp(rx, -4.2, 4.2); N.z = -12.6 - DIFF[G.diffKey].retDepth; N.tgt = { x: N.x, z: N.z };</span>
+<span class="cstat-no" title="statement not covered" >    npcReceiveX = N.x;</span>
+<span class="cstat-no" title="statement not covered" >    const bb = serveBoxBounds();</span>
+<span class="cstat-no" title="statement not covered" >    G.srvAim = { x: clamp(G.srvAim.x, bb.x1, bb.x2), z: clamp(G.srvAim.z, bb.z1, bb.z2) };</span>
+<span class="cstat-no" title="statement not covered" >    if (G.srvAim.x &lt; bb.x1 || G.srvAim.x &gt; bb.x2) G.srvAim.x = (bb.x1 + bb.x2) / 2;</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    N.x = side === 'deuce' ? -1.2 : 1.2; N.z = -12.45; N.tgt = { x: N.x, z: N.z };</span>
+<span class="cstat-no" title="statement not covered" >    P.x = side === 'deuce' ? 2.0 : -2.0; P.z = 12.6;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  P.vx = P.vz = 0; P.pending = null; P.recover = 0; P.antSide = 0; N.antSide = 0;</span>
+<span class="cstat-no" title="statement not covered" >  b.active = false; b.held = true; b.trail.length = 0;</span>
+<span class="cstat-no" title="statement not covered" >  const dom = sv === 0 ? 1 : -1;</span>
+<span class="cstat-no" title="statement not covered" >  b.x = (sv === 0 ? P.x : N.x) - dom * 0.22; b.y = 1.3; b.z = sv === 0 ? P.z : N.z;</span>
+<span class="cstat-no" title="statement not covered" >  b.vx = b.vy = b.vz = 0; b.spin = 0; b.netHit = false; b.isServe = false; b.bounces = 0;</span>
+<span class="cstat-no" title="statement not covered" >  b.squashT = 0; b.hitFlash = null;</span>
+<span class="cstat-no" title="statement not covered" >  G.rally = 0; G.strike = null;</span>
+<span class="cstat-no" title="statement not covered" >  G.state = 'serve';</span>
+<span class="cstat-no" title="statement not covered" >  G.serveT = sv === 1 ? rnd(1.0, 1.8) : Infinity;</span>
+<span class="cstat-no" title="statement not covered" >  logPointStart({ server: sv, serveSide: side, npcReceiveX });</span>
+<span class="cstat-no" title="statement not covered" >  hintEl.style.display = 'block';</span>
+<span class="cstat-no" title="statement not covered" >  if (sv === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.innerHTML = (G.mode === 'rally' ? '' : `${G.serveNum === 1 ? '1st' : '2nd'} serve · ${side} court — `)</span>
+<span class="cstat-no" title="statement not covered" >      + '&lt;b&gt;WASD&lt;/b&gt; move · &lt;b&gt;Shift+WASD&lt;/b&gt; aim · &lt;b&gt;SPACE&lt;/b&gt; toss · strike: &lt;b&gt;J&lt;/b&gt; top spin · &lt;b&gt;K&lt;/b&gt; slice · &lt;b&gt;L&lt;/b&gt; flat';</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.innerHTML = 'CPU to serve — get ready';</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  refreshHUD();</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >function setupServeDoubles(sv, side) {</span>
+<span class="cstat-no" title="statement not covered" >  const b = G.ball;</span>
+<span class="cstat-no" title="statement not covered" >  const entities = [G.player, G.partner, G.npc, G.npc2];</span>
+<span class="cstat-no" title="statement not covered" >  const svEnt = entities[sv];</span>
+<span class="cstat-no" title="statement not covered" >  const svTeam = sv &lt; 2 ? 0 : 1;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  const isDeuce = side === 'deuce';</span>
+<span class="cstat-no" title="statement not covered" >  const humanDeuce = G.receiveHuman === 0 ? 0 : 1;  // human entity covering the deuce court</span>
+<span class="cstat-no" title="statement not covered" >  const humanAd    = humanDeuce === 0 ? 1 : 0;</span>
+<span class="cstat-no" title="statement not covered" >  const cpuDeuce   = G.receiveCpu  === 0 ? 2 : 3;    // cpu entity covering the deuce court</span>
+<span class="cstat-no" title="statement not covered" >  const cpuAd      = cpuDeuce === 2 ? 3 : 2;</span>
+<span class="cstat-no" title="statement not covered" >  const recvIdx = svTeam === 0 ? (isDeuce ? cpuDeuce : cpuAd)</span>
+<span class="cstat-no" title="statement not covered" >                               : (isDeuce ? humanDeuce : humanAd);</span>
+<span class="cstat-no" title="statement not covered" >  G.receiverEntity = recvIdx;</span>
+<span class="cstat-no" title="statement not covered" >  const recvEnt = entities[recvIdx];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Determine partner indices (teammate of server/receiver)</span>
+<span class="cstat-no" title="statement not covered" >  const svPartnerIdx = sv &lt; 2 ? (sv === 0 ? 1 : 0) : (sv === 2 ? 3 : 2);</span>
+<span class="cstat-no" title="statement not covered" >  const recvPartnerIdx = recvIdx &lt; 2 ? (recvIdx === 0 ? 1 : 0) : (recvIdx === 2 ? 3 : 2);</span>
+<span class="cstat-no" title="statement not covered" >  const svPartnerEnt = entities[svPartnerIdx];</span>
+<span class="cstat-no" title="statement not covered" >  const recvPartnerEnt = entities[recvPartnerIdx];</span>
+<span class="cstat-no" title="statement not covered" >  const d = DIFF[G.diffKey];</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Server lateral: deuce = +x for human team, deuce = -x for cpu team (mirrored courts)</span>
+<span class="cstat-no" title="statement not covered" >  const svSideX = svTeam === 0</span>
+<span class="cstat-no" title="statement not covered" >    ? (isDeuce ? 1.2 : -1.2)</span>
+<span class="cstat-no" title="statement not covered" >    : (isDeuce ? -1.2 : 1.2);</span>
+<span class="cstat-no" title="statement not covered" >  const svBaseZ  = svTeam === 0 ? 12.45 : -12.45;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Receiver position — adaptive for NPC (reuse serve memory from human team)</span>
+<span class="cstat-no" title="statement not covered" >  let recvX;</span>
+<span class="cstat-no" title="statement not covered" >  if (svTeam === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    const sgn = isDeuce ? -1 : 1;</span>
+<span class="cstat-no" title="statement not covered" >    const own = G.npcMem.serve[side], opp = G.npcMem.serve[side === 'deuce' ? 'ad' : 'deuce'];</span>
+<span class="cstat-no" title="statement not covered" >    const recs = [];</span>
+<span class="cstat-no" title="statement not covered" >    own.slice(-5).forEach(r =&gt; recs.push({ w: r.projX * sgn, k: r.w }));</span>
+<span class="cstat-no" title="statement not covered" >    opp.slice(-5).forEach(r =&gt; recs.push({ w: r.projX * -sgn, k: r.w * 0.5 }));</span>
+<span class="cstat-no" title="statement not covered" >    recvX = sgn * 2.4;</span>
+<span class="cstat-no" title="statement not covered" >    if (recs.length &gt;= 2) {</span>
+<span class="cstat-no" title="statement not covered" >      let sw = 0, sx = 0; recs.forEach(r =&gt; { sw += r.k; sx += r.w * r.k; });</span>
+<span class="cstat-no" title="statement not covered" >      const wide = clamp(sx / sw, 0.4, 4.0);</span>
+<span class="cstat-no" title="statement not covered" >      const adapt = { easy: 0.35, medium: 0.55, hard: 0.75 }[G.diffKey];</span>
+<span class="cstat-no" title="statement not covered" >      recvX = sgn * (2.4 * (1 - adapt) + wide * adapt);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    recvX = clamp(recvX, -4.2, 4.2);</span>
+<span class="cstat-no" title="statement not covered" >    const bb = serveBoxBounds();</span>
+<span class="cstat-no" title="statement not covered" >    G.srvAim = { x: clamp(G.srvAim.x, bb.x1, bb.x2), z: clamp(G.srvAim.z, bb.z1, bb.z2) };</span>
+<span class="cstat-no" title="statement not covered" >    if (G.srvAim.x &lt; bb.x1 || G.srvAim.x &gt; bb.x2) G.srvAim.x = (bb.x1 + bb.x2) / 2;</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    // CPU serves: human receiver goes to their deuce/ad side</span>
+<span class="cstat-no" title="statement not covered" >    recvX = isDeuce ? 2.0 : -2.0;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  const recvBaseZ = svTeam === 0 ? -12.6 - d.retDepth : 12.6;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Net positions: server's partner and receiver's partner go to net (opposite side from baseline partner)</span>
+<span class="cstat-no" title="statement not covered" >  const svNetX    =  -svSideX * 1.2;</span>
+<span class="cstat-no" title="statement not covered" >  const svNetZ    = svTeam === 0 ? 2.5 : -2.5;</span>
+<span class="cstat-no" title="statement not covered" >  const recvNetX  = -recvX * 0.6; // net player on the side diagonal from receiver</span>
+<span class="cstat-no" title="statement not covered" >  const recvNetZ  = svTeam === 0 ? -2.5 : 2.5;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Place server</span>
+<span class="cstat-no" title="statement not covered" >  svEnt.x = svSideX; svEnt.z = svBaseZ;</span>
+<span class="cstat-no" title="statement not covered" >  svEnt.vx = svEnt.vz = 0; svEnt.recover = 0;</span>
+<span class="cstat-no" title="statement not covered" >  if (svEnt.pending !== undefined) svEnt.pending = null;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Place server's partner at net</span>
+<span class="cstat-no" title="statement not covered" >  svPartnerEnt.x = svNetX; svPartnerEnt.z = svNetZ;</span>
+<span class="cstat-no" title="statement not covered" >  svPartnerEnt.vx = svPartnerEnt.vz = 0;</span>
+<span class="cstat-no" title="statement not covered" >  svPartnerEnt.netMode = true; svPartnerEnt.netX = svNetX;</span>
+<span class="cstat-no" title="statement not covered" >  if (svPartnerEnt.tgt) { svPartnerEnt.tgt.x = svNetX; svPartnerEnt.tgt.z = svNetZ; }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Place receiver</span>
+<span class="cstat-no" title="statement not covered" >  recvEnt.x = recvX; recvEnt.z = recvBaseZ;</span>
+<span class="cstat-no" title="statement not covered" >  recvEnt.vx = recvEnt.vz = 0; recvEnt.netMode = false;</span>
+<span class="cstat-no" title="statement not covered" >  if (recvEnt.tgt) { recvEnt.tgt.x = recvX; recvEnt.tgt.z = recvBaseZ; }</span>
+<span class="cstat-no" title="statement not covered" >  if (recvEnt.pending !== undefined) recvEnt.pending = null;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Place receiver's partner at net</span>
+<span class="cstat-no" title="statement not covered" >  recvPartnerEnt.x = recvNetX; recvPartnerEnt.z = recvNetZ;</span>
+<span class="cstat-no" title="statement not covered" >  recvPartnerEnt.vx = recvPartnerEnt.vz = 0;</span>
+<span class="cstat-no" title="statement not covered" >  recvPartnerEnt.netMode = true; recvPartnerEnt.netX = recvNetX;</span>
+<span class="cstat-no" title="statement not covered" >  if (recvPartnerEnt.tgt) { recvPartnerEnt.tgt.x = recvNetX; recvPartnerEnt.tgt.z = recvNetZ; }</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Reset anticipation for all; assign each entity a home court half from starting position</span>
+<span class="cstat-no" title="statement not covered" >  entities.forEach(e =&gt; { if (e) { e.antSide = 0; e.homeSide = e.x &gt;= 0 ? 1 : -1; } });</span>
+<span class="cstat-no" title="statement not covered" >  if (G.npc) { G.npc.plan = null; }</span>
+<span class="cstat-no" title="statement not covered" >  if (G.npc2) { G.npc2.plan = null; }</span>
+<span class="cstat-no" title="statement not covered" >  G.cpuHitter = null;</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Ball</span>
+<span class="cstat-no" title="statement not covered" >  b.active = false; b.held = true; b.trail.length = 0;</span>
+<span class="cstat-no" title="statement not covered" >  const dom = svTeam === 0 ? 1 : -1;</span>
+<span class="cstat-no" title="statement not covered" >  b.x = svEnt.x - dom * 0.22; b.y = 1.3; b.z = svEnt.z;</span>
+<span class="cstat-no" title="statement not covered" >  b.vx = b.vy = b.vz = 0; b.spin = 0; b.netHit = false; b.isServe = false; b.bounces = 0;</span>
+<span class="cstat-no" title="statement not covered" >  b.squashT = 0; b.hitFlash = null;</span>
+<span class="cstat-no" title="statement not covered" >  G.rally = 0; G.strike = null;</span>
+<span class="cstat-no" title="statement not covered" >  G.state = 'serve';</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  // Auto-serve timer: human player (sv=0) uses spacebar; all others auto-serve</span>
+<span class="cstat-no" title="statement not covered" >  G.serveT = sv === 0 ? Infinity : rnd(1.0, 1.8);</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  logPointStart({ server: sv, serveSide: side, npcReceiveX: recvEnt.x });</span>
+<span class="cstat-no" title="statement not covered" >  hintEl.style.display = 'block';</span>
+<span class="cstat-no" title="statement not covered" >  if (sv === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.innerHTML = (G.mode === 'rally' ? '' : `${G.serveNum === 1 ? '1st' : '2nd'} serve · ${side} court — `)</span>
+<span class="cstat-no" title="statement not covered" >      + '&lt;b&gt;WASD&lt;/b&gt; move · &lt;b&gt;Shift+WASD&lt;/b&gt; aim · &lt;b&gt;SPACE&lt;/b&gt; toss · strike: &lt;b&gt;J&lt;/b&gt; top spin · &lt;b&gt;K&lt;/b&gt; slice · &lt;b&gt;L&lt;/b&gt; flat';</span>
+<span class="cstat-no" title="statement not covered" >  } else if (svTeam === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.innerHTML = 'Your partner is serving — get ready';</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.innerHTML = 'CPU to serve — get ready';</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  refreshHUD();</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function startToss(by) {</span>
+<span class="cstat-no" title="statement not covered" >  if (G.state !== 'serve') return;</span>
+<span class="cstat-no" title="statement not covered" >  G.state = 'toss'; G.toss = { t: 0, by, hit: false };</span>
+<span class="cstat-no" title="statement not covered" >  hintEl.style.display = 'none';</span>
+<span class="cstat-no" title="statement not covered" >  tone(420, 0.05, 'sine', 0.025);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function strikeServe(type) {</span>
+<span class="cstat-no" title="statement not covered" >  const t = G.toss;</span>
+<span class="cstat-no" title="statement not covered" >  if (!t || t.hit) return;</span>
+<span class="cstat-no" title="statement not covered" >  if (t.t &lt; 0.20) { fb('Wait for the toss', '#e0a05a'); return; }</span>
+<span class="cstat-no" title="statement not covered" >  t.hit = true;</span>
+<span class="cstat-no" title="statement not covered" >  const tol = (SERVE_TYPE[type || 'flat'].tol) || 1;</span>
+<span class="cstat-no" title="statement not covered" >  const err = Math.abs(t.t - TOSS_APEX);</span>
+<span class="cstat-no" title="statement not covered" >  const q = err &lt;= 0.045 * tol ? 'perfect' : err &lt;= 0.10 * tol ? 'good' : err &lt;= 0.18 * tol ? 'ok' : 'weak';</span>
+<span class="cstat-no" title="statement not covered" >  fb(QUAL[q].label, QUAL[q].col);</span>
+<span class="cstat-no" title="statement not covered" >  fireServe(t.by, q, tossY(t.t), type);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function fireServe(sv, q, contactY, type) {</span>
+<span class="cstat-no" title="statement not covered" >  const b = G.ball, d = DIFF[G.diffKey];</span>
+<span class="cstat-no" title="statement not covered" >  G.toss = null;</span>
+<span class="cstat-no" title="statement not covered" >  // All non-human serves (partner, npc, npc2) pick type automatically</span>
+<span class="cstat-no" title="statement not covered" >  if (sv !== 0 &amp;&amp; !type) {</span>
+<span class="cstat-no" title="statement not covered" >    type = G.serveNum === 2 ? (Math.random() &lt; 0.7 ? 'kick' : 'slice')</span>
+<span class="cstat-no" title="statement not covered" >         : (Math.random() &lt; 0.6 ? 'flat' : Math.random() &lt; 0.6 ? 'slice' : 'kick');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  const ST = SERVE_TYPE[type || 'flat'];</span>
+<span class="cstat-no" title="statement not covered" >  const safety = ST.spin !== 0 ? 0.75 : 1;</span>
+<span class="cstat-no" title="statement not covered" >  const svTeam = G.matchType === 'doubles' ? (sv &lt; 2 ? 0 : 1) : sv;</span>
+<span class="cstat-no" title="statement not covered" >  const svEnt = serverEntity(sv);</span>
+<span class="cstat-no" title="statement not covered" >  const serveFault = sv === 0 &amp;&amp; ST.fault &amp;&amp; Math.random() &lt; (ST.fault[q] || 0);</span>
+<span class="cstat-no" title="statement not covered" >  let speed, sx, tx, tz;</span>
+<span class="cstat-no" title="statement not covered" >  if (sv === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    speed = SRV_SPEED[q] * (G.serveNum === 2 ? 0.88 : 1) * ST.m;</span>
+<span class="cstat-no" title="statement not covered" >    sx = QUAL[q].noise * 0.42 * (G.serveNum === 2 ? 0.7 : 1) * safety;</span>
+<span class="cstat-no" title="statement not covered" >    tx = G.srvAim.x; tz = G.srvAim.z;</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    speed = d.srv * (G.serveNum === 1 ? 1 : 0.8) * rnd(0.95, 1.03) * ST.m;</span>
+<span class="cstat-no" title="statement not covered" >    sx = d.srvNoise * (G.serveNum === 1 ? 1 : 0.6) * safety;</span>
+<span class="cstat-no" title="statement not covered" >    const side = serveSide();</span>
+<span class="cstat-no" title="statement not covered" >    // svTeam===0 (partner) serves from human side to CPU court (z&lt;0), mirrored x-ranges</span>
+<span class="cstat-no" title="statement not covered" >    // svTeam===1 (npc/npc2) serves from CPU side to human court (z&gt;0), standard x-ranges</span>
+<span class="cstat-no" title="statement not covered" >    const bx = svTeam === 0</span>
+<span class="cstat-no" title="statement not covered" >      ? (side === 'deuce' ? [-3.85, -0.3] : [0.3, 3.85])</span>
+<span class="cstat-no" title="statement not covered" >      : (side === 'deuce' ? [0.3, 3.85]   : [-3.85, -0.3]);</span>
+<span class="cstat-no" title="statement not covered" >    if (Math.random() &lt; d.open * 0.6) {</span>
+<span class="cstat-no" title="statement not covered" >      tx = Math.random() &lt; 0.5 ? (bx[0] &lt; 0 ? bx[0] + 0.35 : bx[1] - 0.35) : (bx[0] &lt; 0 ? bx[1] - 0.35 : bx[0] + 0.35);</span>
+<span class="cstat-no" title="statement not covered" >    } else tx = rnd(bx[0] + 0.6, bx[1] - 0.6);</span>
+<span class="cstat-no" title="statement not covered" >    tz = svTeam === 0 ? -rnd(3.6, 5.7) : rnd(3.6, 5.7);</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  const curve = ST.curve * (svTeam === 0 ? -1 : 1);</span>
+<span class="cstat-no" title="statement not covered" >  let ax = tx + gauss() * sx, az = tz + gauss() * 0.5 * (sv === 0 ? QUAL[q].noise * 0.8 * safety : 1);</span>
+<span class="cstat-no" title="statement not covered" >  b.held = false; b.active = true;</span>
+<span class="cstat-no" title="statement not covered" >  b.x = svEnt.x + (svTeam === 0 ? 0.25 : -0.25);</span>
+<span class="cstat-no" title="statement not covered" >  b.y = contactY || 2.9; b.z = svEnt.z;</span>
+<span class="cstat-no" title="statement not covered" >  if (curve) {</span>
+<span class="cstat-no" title="statement not covered" >    const Test = Math.hypot(ax - b.x, az - b.z) / speed;</span>
+<span class="cstat-no" title="statement not covered" >    ax -= 0.5 * curve * Test * Test;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  if (serveFault) {</span>
+<span class="cstat-no" title="statement not covered" >    if (Math.random() &lt; 0.5) ax = (serveSide() === 'deuce' ? -5.0 : 5.0);</span>
+<span class="cstat-no" title="statement not covered" >    else az = -7.6;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  const g = GRAV * (1 + 0.22 * ST.spin);</span>
+<span class="cstat-no" title="statement not covered" >  const v = solveShot(b.x, b.y, b.z, ax, az, speed, g, Math.max(ST.clr, G.serveNum === 2 ? 0.12 : 0));</span>
+<span class="cstat-no" title="statement not covered" >  b.vx = v.vx; b.vy = v.vy; b.vz = v.vz; b.spin = ST.spin; b.curve = curve;</span>
+<span class="cstat-no" title="statement not covered" >  b.lastHitter = svTeam; // team index (0=human-team, 1=cpu-team)</span>
+<span class="cstat-no" title="statement not covered" >  G.lastHitterEntity = sv;</span>
+<span class="cstat-no" title="statement not covered" >  b.bounces = 0; b.isServe = true; b.netHit = false;</span>
+<span class="cstat-no" title="statement not covered" >  G.state = 'live';</span>
+<span class="cstat-no" title="statement not covered" >  G.rally = 1;</span>
+<span class="cstat-no" title="statement not covered" >  if (svTeam === 0) {</span>
+<span class="cstat-no" title="statement not covered" >    G.npc.reactT = d.react * 0.5; G.npc.plan = null;</span>
+<span class="cstat-no" title="statement not covered" >    if (G.npc2) { G.npc2.reactT = d.react * 0.5; G.npc2.plan = null; }</span>
+<span class="cstat-no" title="statement not covered" >    svEnt.recover = 0.45;</span>
+<span class="cstat-no" title="statement not covered" >    showShot(ST.label);</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    svEnt.recover = 0.45;</span>
+<span class="cstat-no" title="statement not covered" >    if (G.player) G.player.recover = 0;</span>
+<span class="cstat-no" title="statement not covered" >    if (G.partner) G.partner.recover = 0;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  logEvent('serve', {</span>
+<span class="cstat-no" title="statement not covered" >    server: sv, serveNum: G.serveNum, q, type: type || 'flat',</span>
+<span class="cstat-no" title="statement not covered" >    speed, target: { tx, tz }, aim: { ax, az }, curve, contactY: b.y,</span>
+<span class="cstat-no" title="statement not covered" >    predicted: predictLanding(),</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >  const serveSoundType = type === 'kick' ? 'topspin' : (type === 'slice' ? 'slice' : 'flat');</span>
+<span class="cstat-no" title="statement not covered" >  sHit(serveSoundType, speed, { isServe: true }); refreshHUD();</span>
+<span class="cstat-no" title="statement not covered" >  svEnt.anim = { t: 0.18, side: svTeam === 0 ? 1 : -1, type: 'serve' };</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function fault() {</span>
+<span class="cstat-no" title="statement not covered" >  sFault();</span>
+<span class="cstat-no" title="statement not covered" >  const sv = servingPlayer();</span>
+<span class="cstat-no" title="statement not covered" >  logEvent('fault', { serveNum: G.serveNum, double: G.mode === 'match' &amp;&amp; G.serveNum === 2 });</span>
+<span class="cstat-no" title="statement not covered" >  if (G.mode === 'rally') {</span>
+<span class="cstat-no" title="statement not covered" >    showMsg('Fault', 'take it again', 1.1);</span>
+<span class="cstat-no" title="statement not covered" >    wait(1.1, setupServe);</span>
+<span class="cstat-no" title="statement not covered" >    return;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  if (G.serveNum === 1) {</span>
+<span class="cstat-no" title="statement not covered" >    G.serveNum = 2;</span>
+<span class="cstat-no" title="statement not covered" >    showMsg('Fault', 'second serve', 1.2);</span>
+<span class="cstat-no" title="statement not covered" >    wait(1.4, setupServe);</span>
+<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >    G.serveNum = 1;</span>
+<span class="cstat-no" title="statement not covered" >    const svTeam = G.matchType === 'doubles' ? (sv &lt; 2 ? 0 : 1) : sv;</span>
+<span class="cstat-no" title="statement not covered" >    const winTeam = 1 - svTeam; // opposite team wins on double fault</span>
+<span class="cstat-no" title="statement not covered" >    endPoint(winTeam, 'Double Fault');</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function wait(t, fn) {</span>
+<span class="cstat-no" title="statement not covered" >  G.state = 'point'; G.pointT = t; G.next = fn;</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >export function updateToss(dt) {</span>
+<span class="cstat-no" title="statement not covered" >  if (G.state !== 'toss' || !G.toss) return;</span>
+<span class="cstat-no" title="statement not covered" >  const t = G.toss; t.t += dt;</span>
+<span class="cstat-no" title="statement not covered" >  const sv = t.by;</span>
+<span class="cstat-no" title="statement not covered" >  const svEnt = serverEntity(sv);</span>
+<span class="cstat-no" title="statement not covered" >  const svTeam = G.matchType === 'doubles' ? (sv &lt; 2 ? 0 : 1) : sv;</span>
+<span class="cstat-no" title="statement not covered" >  const dom = svTeam === 0 ? 1 : -1;</span>
+<span class="cstat-no" title="statement not covered" >  const phT = Math.min(1, t.t / 0.5);</span>
+<span class="cstat-no" title="statement not covered" >  G.ball.held = true; G.ball.active = false;</span>
+<span class="cstat-no" title="statement not covered" >  G.ball.x = svEnt.x - dom * 0.22 + dom * 0.4 * phT;</span>
+<span class="cstat-no" title="statement not covered" >  G.ball.z = svEnt.z + (svTeam === 0 ? -0.3 : 0.3) * phT;</span>
+<span class="cstat-no" title="statement not covered" >  G.ball.y = Math.max(1.0, tossY(t.t));</span>
+<span class="cstat-no" title="statement not covered" >  if (!t.hit &amp;&amp; t.t &gt; 1.15) {</span>
+<span class="cstat-no" title="statement not covered" >    G.toss = null; G.state = 'serve';</span>
+<span class="cstat-no" title="statement not covered" >    hintEl.style.display = 'block';</span>
+<span class="cstat-no" title="statement not covered" >    if (sv === 0) hintEl.innerHTML = 'Toss again — &lt;b&gt;SPACE&lt;/b&gt;';</span>
+<span class="cstat-no" title="statement not covered" >    else G.serveT = 0.4;</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-06-14T07:53:06.138Z
+            </div>
+        <script src="prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="sorter.js"></script>
+        <script src="block-navigation.js"></script>
+    </body>
+</html>
+    

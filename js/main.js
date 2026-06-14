@@ -8,11 +8,13 @@ import { updatePlayer } from './player.js';
 import { updateNPC, updatePartner, updateNPC2 } from './npc.js';
 import { render } from './render.js';
 import { logTick, logFrame } from './logger.js';
+import { updateGamepad } from './gamepad.js';
 import './menu.js';
 import './input.js';
 
 function update(dt) {
   updateCamera(dt);
+  updateGamepad(dt);
   if (G.state === 'menu' || G.paused) return;
   logTick(dt);
 

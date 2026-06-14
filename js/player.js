@@ -46,6 +46,7 @@ export function updatePlayer(dt) {
     }
   } else { p.vx = p.vz = 0; }
   p.spd = Math.hypot(p.vx, p.vz);
+  p.lvx = lerp(p.lvx !== undefined ? p.lvx : 0, p.vx, Math.min(1, 12 * dt));
   p.stride = (p.stride || 0) + p.spd * dt * 3.1;
 
   if ((G.state === 'serve' || G.state === 'toss') && servingPlayer() === 0) {

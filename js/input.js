@@ -22,16 +22,17 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyM') { G.mute = !G.mute; showShot(G.mute ? 'Sound off' : 'Sound on'); return; }
   if (e.code === 'KeyG') { downloadLog(); showShot('Log saved'); return; }
   if (G.paused || G.state === 'menu') return;
-  if (e.code === 'Space') {
-    if (G.state === 'serve' && servingPlayer() === 0) startToss(0);
-    else if (G.state === 'toss' && G.toss && G.toss.by === 0 && !G.toss.hit)
-      fb('Strike: J top spin · K slice · L flat', '#b8c4d0');
-    return;
-  }
   if (e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyL' || e.code === 'KeyI' || e.code === 'Semicolon') {
-    if (G.state === 'toss' && G.toss && G.toss.by === 0 && e.code !== 'Semicolon' && e.code !== 'KeyI') {
-      strikeServe(e.code === 'KeyJ' ? 'kick' : e.code === 'KeyK' ? 'slice' : 'flat');
-    } else strokePress(e.code);
+    if (G.state === 'serve' && servingPlayer() === 0 && e.code !== 'Semicolon') {
+      startToss(0); return;
+    }
+    if (G.state === 'toss' && G.toss && G.toss.by === 0) {
+      if (e.code === 'KeyJ' || e.code === 'KeyI') { strikeServe('kick'); return; }
+      if (e.code === 'KeyK') { strikeServe('slice'); return; }
+      if (e.code === 'KeyL') { strikeServe('flat'); return; }
+      return;
+    }
+    strokePress(e.code);
   }
 });
 

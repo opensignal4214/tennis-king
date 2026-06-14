@@ -1,6 +1,6 @@
 import { G } from './state.js';
 import { name } from './utils.js';
-import { sPoint } from './audio.js';
+import { sPoint, crowdDuration } from './audio.js';
 import { $, showMsg, refreshHUD, hintEl } from './hud.js';
 import { newScore } from './scoring.js';
 import { setupServe } from './serve.js';
@@ -17,15 +17,16 @@ export function endPoint(w, reason) {
     G.bestRally = Math.max(G.bestRally, rallyLen);
     logPointEnd({ winner: w, reason, rallyLen, scoreAfter: null, stats: [...G.stats] });
     showMsg(reason, `rally of ${rallyLen}`, 1.5);
-    G.pointT = 1.7; G.next = setupServe;
+    G.pointT = crowdDuration(); G.next = setupServe;
   } else {
     G.stats[w]++;
     G.serveNum = 1;
     const sub = addPoint(w);
     logPointEnd({ winner: w, reason, rallyLen, scoreAfter: JSON.parse(JSON.stringify(G.score)), stats: [...G.stats] });
     showMsg(reason, sub, 1.9);
-    if (G.score.done) { G.pointT = 2.3; G.next = showGameOver; }
-    else { G.pointT = 2.1; G.next = setupServe; }
+    const cd = crowdDuration();
+    if (G.score.done) { G.pointT = cd; G.next = showGameOver; }
+    else { G.pointT = cd; G.next = setupServe; }
   }
   refreshHUD();
 }

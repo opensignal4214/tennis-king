@@ -11,6 +11,7 @@ export function updatePlayer(dt) {
   const p = G.player;
   p.cool -= dt; p.swingCd -= dt; p.recover -= dt;
   if (p.anim) { p.anim.t += dt; if (!p.anim.charging && p.anim.t > 0.7) p.anim = null; }
+  if (p.releasePulse) { p.releasePulse.t += dt; if (p.releasePulse.t > 0.35) p.releasePulse = null; }
 
   const shift = keys.ShiftLeft || keys.ShiftRight;
   const aimMode = shift && (G.state === 'serve' || G.state === 'toss') && servingPlayer() === 0;
@@ -146,12 +147,14 @@ function strokeRelease(panic) {
   if (!ch) return;
   const power = clamp(ch.t / CHARGE_FULL, 0, 1);
   p.charge = null;
+  p.releasePulse = { t: 0 };
   const st = G.strike;
   if (panic) {
     // Held the charge until the ball reached the strike zone — forced, badly-timed swing.
     p.pending = { key: ch.key, q: 'weak', charged: true, power: power * 0.4, panic: true, t: 0.42 };
-    if (p.anim) { p.anim.charging = false; p.anim.t = 0; }
-    else p.anim = { t: 0, side: p.antSide || (b.x >= p.x ? 1 : -1), type: 'ground' };
+    const panicSide = b.x >= p.x ? 1 : -1;
+    if (p.anim) { p.anim.charging = false; p.anim.t = 0; p.anim.side = panicSide; }
+    else p.anim = { t: 0, side: panicSide, type: 'ground' };
     p.anim.contact = [clamp(b.x - p.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), -0.35];
     p.swingCd = 0.30;
     fb('Panic!', '#e05a5a');
@@ -181,8 +184,9 @@ function strokeRelease(panic) {
   let q = a <= 0.05 ? 'perfect' : a <= 0.12 ? 'good' : a <= 0.20 ? 'ok' : 'weak';
   if (err < -0.05) q = q === 'perfect' ? 'good' : q === 'good' ? 'ok' : 'weak';
   p.pending = { key: ch.key, q, charged: true, power, t: 0.42 };
-  if (p.anim) { p.anim.charging = false; p.anim.t = 0; }
-  else p.anim = { t: 0, side: p.antSide || (st.x >= p.x ? 1 : -1), type: 'ground' };
+  const relSide = st.x >= p.x ? 1 : -1;
+  if (p.anim) { p.anim.charging = false; p.anim.t = 0; p.anim.side = relSide; }
+  else p.anim = { t: 0, side: relSide, type: 'ground' };
   p.anim.contact = [clamp(st.x - p.x, -1.35, 1.35), clamp(st.y, 0.25, 2.72), -0.35];
   p.swingCd = 0.30;
   fb(`${QUAL[q].label} · ${Math.round(power * 100)}%`, QUAL[q].col);
@@ -227,6 +231,7 @@ function doPlayerHit() {
   }
   if (p.anim) {
     p.anim.type = animType;
+    p.anim.side = fore ? 1 : -1;
     p.anim.contact = [clamp(b.x - p.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - p.z, -1.35, 1.35)];
   }
   let tz = tzBase + (depth > 0 ? 1.4 : depth < 0 ? -2.3 : 0);

@@ -1,7 +1,7 @@
 import { GRAV, DIFF, SW, DW, HL, SVC } from './constants.js';
 import { G } from './state.js';
 import { clamp, netHeight } from './utils.js';
-import { sHit, sBounce, sNet } from './audio.js';
+import { sHit, sBounce, sNet, sOut } from './audio.js';
 import { solveShot, predictLanding } from './physics.js';
 import { refreshHUD } from './hud.js';
 import { serveSide } from './scoring.js';
@@ -15,6 +15,7 @@ export function hitBall(hitter, tx, tz, speed, spin, clear, shotType) {
   const v = solveShot(b.x, b.y, b.z, tx, tz, speed, g, clear);
   b.vx = v.vx; b.vy = v.vy; b.vz = v.vz; b.spin = spin; b.curve = 0;
   b.lastHitter = hitter; b.bounces = 0; b.isServe = false; b.netHit = false;
+  b.hitFlash = { x: b.x, y: b.y, z: b.z, t: 0 };
   G.rally++;
   if (hitter === 0) {
     G.npc.reactT = DIFF[G.diffKey].react; G.npc.plan = null;
@@ -25,13 +26,15 @@ export function hitBall(hitter, tx, tz, speed, spin, clear, shotType) {
     hitter, target: { tx, tz }, speed, spin, clear, shotType, rally: G.rally,
     v: { vx: v.vx, vy: v.vy, vz: v.vz }, predicted: predictLanding(),
   });
-  sHit(shotType, speed);
+  sHit(shotType, speed, { hitter });
   refreshHUD();
 }
 
 export function updateBall(dt) {
   const b = G.ball;
   if (!b.active || b.held) return;
+  if (b.squashT > 0) b.squashT = Math.max(0, b.squashT - dt);
+  if (b.hitFlash) { b.hitFlash.t += dt; if (b.hitFlash.t > 0.28) b.hitFlash = null; }
   const g = GRAV * (1 + 0.22 * b.spin);
   b.vy -= g * dt;
   b.vx += (b.curve || 0) * dt;
@@ -49,7 +52,7 @@ export function updateBall(dt) {
       b.vz = (pz > 0 ? 1 : -1) * Math.abs(b.vz) * 0.07;
       b.vx *= 0.25; b.vy = Math.min(b.vy, 0); b.spin = 0; b.netHit = true;
       logEvent('netCord', { xC, yC, netH: netHeight(xC) });
-      sNet();
+      if (G.state === 'live') sNet();
     }
   }
   if (b.y <= 0 && b.vy < 0) {
@@ -85,7 +88,17 @@ export function applyBounce(b) {
 }
 
 function groundEvent(b) {
-  sBounce();
+  if (G.state === 'live') sBounce();
+  b.squashT = 0.14;
+  const spd = Math.hypot(b.vx, b.vz);
+  const n = Math.min(8, 3 + Math.floor(spd * 0.35));
+  for (let i = 0; i < n; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const v = 1.0 + Math.random() * 2.8;
+    G.particles.push({ x: b.x, z: b.z, vx: Math.cos(ang)*v, vz: Math.sin(ang)*v, age: 0, maxAge: 0.25 + Math.random()*0.14 });
+  }
+  G.bounceMarks.push({ x: b.x, z: b.z, age: 0 });
+  if (G.bounceMarks.length > 6) G.bounceMarks.shift();
   if (G.state === 'live') {
     const side = b.z >= 0 ? 0 : 1;
     const halfW = G.matchType === 'doubles' ? DW : SW;
@@ -110,7 +123,7 @@ function groundEvent(b) {
         G.npcMem.rallyX = G.npcMem.rallyX * 0.65 + b.x * 0.35;
       if (b.netHit) { applyBounce(b); endPoint(1 - b.lastHitter, b.lastHitter === 0 ? 'Net!' : 'CPU nets it'); return; }
       if (side === b.lastHitter) { applyBounce(b); endPoint(1 - b.lastHitter, 'Net!'); return; }
-      if (!inCourt) { applyBounce(b); endPoint(1 - b.lastHitter, b.lastHitter === 0 ? 'Out!' : 'CPU hits it out'); return; }
+      if (!inCourt) { applyBounce(b); sOut(); endPoint(1 - b.lastHitter, b.lastHitter === 0 ? 'Out!' : 'CPU hits it out'); return; }
       b.bounces = 1;
     } else {
       applyBounce(b);

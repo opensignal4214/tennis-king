@@ -54,6 +54,7 @@ export function refreshHUD() {
   };
   const hist = i => s.setHist.map(h => h[i]).join(' ');
   const dot = (col) => `<span style="display:inline-block;width:.65em;height:.65em;border-radius:50%;background:${col};vertical-align:middle;margin-right:.25em"></span>`;
+  const ball = `<span class="srv">🎾</span>`;
   if (G.matchType === 'doubles') {
     const humanServes = sv < 2;
     const cpuServes   = !humanServes;
@@ -62,15 +63,15 @@ export function refreshHUD() {
     const nc = COLORS[G.npcColors?.[0]]?.shirt || '#ff6b57';
     const n2c = COLORS[G.npcColors?.[1]]?.shirt || '#f5a623';
     hudEl.innerHTML = `<table>
-      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td></tr>
-      <tr><td class="nm">${humanServes ? '<span class="srv">●</span> ' : ''}${dot(pc)}${dot(ptc)}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td></tr>
-      <tr><td class="nm">${cpuServes ? '<span class="srv">●</span> ' : ''}${dot(nc)}${dot(n2c)}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td></tr>
+      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td><td></td></tr>
+      <tr><td class="nm">${dot(pc)}${dot(ptc)}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td><td>${humanServes ? ball : ''}</td></tr>
+      <tr><td class="nm">${dot(nc)}${dot(n2c)}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td><td>${cpuServes ? ball : ''}</td></tr>
     </table>`;
   } else {
     hudEl.innerHTML = `<table>
-      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td></tr>
-      <tr><td class="nm">${sv === 0 ? '<span class="srv">●</span> ' : ''}You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td></tr>
-      <tr><td class="nm">${sv === 1 ? '<span class="srv">●</span> ' : ''}CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td></tr>
+      <tr class="hdr"><td></td><td>${s.setHist.length ? 'Sets' : ''}</td><td>S</td><td>G</td><td>Pts</td><td></td></tr>
+      <tr><td class="nm">You</td><td>${hist(0)}</td><td>${s.sets[0]}</td><td>${s.games[0]}</td><td>${pts(0)}</td><td>${sv === 0 ? ball : ''}</td></tr>
+      <tr><td class="nm">CPU</td><td>${hist(1)}</td><td>${s.sets[1]}</td><td>${s.games[1]}</td><td>${pts(1)}</td><td>${sv === 1 ? ball : ''}</td></tr>
     </table>`;
   }
 }

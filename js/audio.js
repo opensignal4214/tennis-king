@@ -36,17 +36,14 @@ function startKeepAlive() {
 // ---------------------------------------------------------------------------
 
 const SOUND_FILES = {
-  hit:          'sounds/hit.wav',
-  hit_flat:     'sounds/hit_flat.wav',
-  hit_topspin:  'sounds/hit_topspin.wav',
-  hit_slice:    'sounds/hit_slice.wav',
-  hit_soft:     'sounds/hit_soft.wav',
-  hit_smash:    'sounds/hit_smash.wav',
-  bounce:       'sounds/bounce.wav',
-  net:          'sounds/net.wav',
-  point_win:    'sounds/point_win.wav',
-  point_lose:   'sounds/point_lose.wav',
-  fault:        'sounds/fault.wav',
+  bounce:            'sounds/bounce.wav',
+  crowd_cheering:    'sounds/crowd_cheering.wav',
+  net:               'sounds/ball_hitting_net.wav',
+  opponent_side_hit: 'sounds/opponent_side_hit.wav',
+  player_side_hit:   'sounds/player_side_hit.wav',
+  ref_fault:         'sounds/ref_shouting_fault.wav',
+  ref_out:           'sounds/ref_shouting_out.wav',
+  serving:           'sounds/serving.wav',
 };
 
 const buffers = {};
@@ -107,15 +104,22 @@ export function noiseBurst(dur, freq, gain, type, q) {
 // Public sound API
 // ---------------------------------------------------------------------------
 
-// shotType: 'flat' | 'topspin' | 'slice' | 'soft' | 'smash' | null (generic)
-export const sHit = (shotType, speed = 20) => {
+// opts.hitter: 0 = human team (player/partner), 1 = CPU team (npc/npc2)
+// opts.isServe: true when called from the serve state machine
+export const sHit = (shotType, speed = 20, opts = {}) => {
   if (G.mute) return;
-  const key = shotType ? `hit_${shotType}` : 'hit';
+  const { hitter = null, isServe = false } = opts;
   const gain = 0.65 + speed * 0.003;
-  if (!playBuffer(key, gain) && !playBuffer('hit', gain)) {
-    noiseBurst(0.045, 420 + speed * 7, 0.5, 'bandpass', 0.7);
-    tone(230 + speed * 1.5, 0.07, 'sine', 0.08, 95);
+  if (isServe) {
+    if (playBuffer('serving', gain)) return;
+  } else if (hitter === 0) {
+    if (playBuffer('player_side_hit', gain)) return;
+  } else if (hitter !== null) {
+    if (playBuffer('opponent_side_hit', gain)) return;
   }
+  // synthesis fallback
+  noiseBurst(0.045, 420 + speed * 7, 0.5, 'bandpass', 0.7);
+  tone(230 + speed * 1.5, 0.07, 'sine', 0.08, 95);
 };
 
 export const sBounce = () => {
@@ -126,7 +130,7 @@ export const sBounce = () => {
   }
 };
 
-export const sNet    = () => {
+export const sNet = () => {
   if (G.mute) return;
   if (!playBuffer('net', 0.7)) {
     noiseBurst(0.1, 240, 0.25, 'lowpass', 0.7);
@@ -136,17 +140,38 @@ export const sNet    = () => {
 
 export const sPoint  = w => {
   if (G.mute) return;
-  const key = w === 0 ? 'point_win' : 'point_lose';
-  if (!playBuffer(key, 0.6)) {
+  const buf = buffers['crowd_cheering'];
+  if (!buf || !ac()) {
     tone(w === 0 ? 520 : 230, 0.22, 'triangle', 0.05, w === 0 ? 780 : 150);
+    return;
+  }
+  // w===0: player wins point (full crowd), w===1: opponent wins (quieter crowd)
+  const gain = w === 0 ? 0.65 : 0.28;
+  const src = AC.createBufferSource();
+  src.buffer = buf;
+  const g = AC.createGain();
+  const dur = buf.duration;
+  const fadeAt = Math.max(0, dur - 0.18);
+  g.gain.setValueAtTime(gain, AC.currentTime);
+  g.gain.setValueAtTime(gain, AC.currentTime + fadeAt);
+  g.gain.linearRampToValueAtTime(0, AC.currentTime + dur);
+  src.connect(g).connect(AC.destination);
+  src.start(0);
+  src.onended = () => { try { src.disconnect(); g.disconnect(); } catch(e) {} };
+};
+
+export const crowdDuration = () => buffers['crowd_cheering']?.duration ?? 2.1;
+
+export const sFault = () => {
+  if (G.mute) return;
+  if (!playBuffer('ref_fault', 0.55)) {
+    tone(200, 0.16, 'sawtooth', 0.035, 120);
   }
 };
 
-export const sFault  = () => {
+export const sOut = () => {
   if (G.mute) return;
-  if (!playBuffer('fault', 0.55)) {
-    tone(200, 0.16, 'sawtooth', 0.035, 120);
-  }
+  playBuffer('ref_out', 0.7);
 };
 
 ['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev =>

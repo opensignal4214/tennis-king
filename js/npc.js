@@ -218,6 +218,11 @@ function ensureHomeSide(e) {
 function pickCpuHitter() {
   const n = G.npc, n2 = G.npc2, b = G.ball;
   if (b.lastHitter !== 0) { G.cpuHitter = null; return; }
+  // Serve return: the side-designated CPU receiver commits, no poaching.
+  if (G.rally === 1 && (G.receiverEntity === 2 || G.receiverEntity === 3)) {
+    G.cpuHitter = G.receiverEntity === 2 ? G.npc : G.npc2;
+    return;
+  }
   const L = predictLanding();
   const ix = L ? L.x : b.x, iz = L ? L.z : b.z;
   ensureHomeSide(n); ensureHomeSide(n2);
@@ -277,6 +282,11 @@ function cpuCoverTarget(self) {
   const b = G.ball;
   ensureHomeSide(self);
   const spread = self.netMode ? 2.4 : 2.6;
+  const lobbed = b.vy > 6 || b.y > 3.2;
+  if (lobbed && self.netMode) {
+    const L = predictLanding();
+    if (L && (L.x >= 0 ? 1 : -1) === self.homeSide && Math.abs(L.z) > 6) self.netMode = false;
+  }
   // Both players slide toward the ball's x position to cover the outgoing path
   const shift = clamp(b.x * 0.28, -1.6, 1.6);
   const tx = clamp(self.homeSide * spread + shift, -DW + 0.35, DW - 0.35);
@@ -489,34 +499,37 @@ export function updatePartner(dt) {
   }
   if (G.state !== 'live') return;
 
-  // Maintain cover side: opposite to where the human player is, with hysteresis
-  if (!p.coverSide) p.coverSide = G.player.x >= 0 ? -1 : 1;
-  if (G.player.x > 0.8 && p.coverSide !== -1) p.coverSide = -1;
-  else if (G.player.x < -0.8 && p.coverSide !== 1) p.coverSide = 1;
-
+  ensureHomeSide(p);
   const incoming = b.lastHitter === 1 && !b.isServe;
-  const dPlayer  = Math.hypot(b.x - G.player.x, b.z - G.player.z);
-  const dPartner = Math.hypot(b.x - p.x, b.z - p.z);
-  // Partner takes ball only if: incoming + ball on partner's covered half + clearly closer than player
-  const ballOnCoverSide = b.z > 0 && (Math.sign(b.x || p.coverSide) === p.coverSide || Math.abs(b.x) < 0.6);
-  const amHitter = incoming && ballOnCoverSide && dPartner < dPlayer - 0.6;
+  const isReturn = G.rally === 1 && incoming;
+  let amHitter = false;
+  if (incoming) {
+    const L = predictLanding();
+    const ballSide = (L ? L.x : b.x) >= 0 ? 1 : -1;
+    if (isReturn) amHitter = (G.receiverEntity === 1);   // only the designated receiver returns
+    else amHitter = (ballSide === p.homeSide);           // in rallies, cover own lateral half
+  }
+
+  // Lob over a net player on their side → drop back to chase
+  const lobbed = b.vy > 6 || b.y > 3.2;
+  if (lobbed && p.netMode && incoming) {
+    const Ll = predictLanding();
+    if (Ll && (Ll.x >= 0 ? 1 : -1) === p.homeSide && Ll.z > 6) p.netMode = false;
+  }
 
   if (amHitter) {
     const dxa = b.x - p.x;
     if (!p.antSide) p.antSide = dxa >= 0 ? 1 : -1;
     else if (p.antSide === 1 && dxa < -0.35) p.antSide = -1;
     else if (p.antSide === -1 && dxa > 0.35) p.antSide = 1;
-    // Chase target
-    const ic = b.vz > 0 ? null : null; // placeholder — use direct ball tracking
-    const L = predictLanding ? predictLanding() : null;
+    const L = predictLanding();
     p.tgt = L && L.z > 0
       ? { x: clamp(L.x, -DW + 0.3, DW - 0.3), z: clamp(L.z - 0.5, 0.4, 14) }
       : { x: clamp(b.x + b.vx * 0.08, -DW + 0.3, DW - 0.3), z: clamp(b.z + 0.2, 0.4, 14) };
   } else {
     p.antSide = 0;
-    // Cover target: own side, shift toward ball
-    const shift = clamp(b.x * 0.25, -1.5, 1.5);
-    const tx = clamp(p.coverSide * 2.4 + shift, -DW + 0.35, DW - 0.35);
+    const shift = clamp(b.x * 0.22, -1.3, 1.3);
+    const tx = clamp(p.homeSide * 2.4 + shift, -DW + 0.35, DW - 0.35);
     const tz = p.netMode ? 2.5 : 11.5;
     p.tgt = { x: tx, z: tz };
   }
@@ -569,8 +582,8 @@ function partnerHit(p) {
   if (p.anim) p.anim.contact = [clamp(b.x - p.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - p.z, -1.35, 1.35)];
   G.lastHitterEntity = 1;
   hitBall(0, tx, tz, speed * rnd(0.92, 1.08), spin, clear, 'topspin');
-  // Recover to own cover side
-  const side = p.coverSide || 1;
+  // Recover to own home side
+  const side = p.homeSide || 1;
   p.netMode = true;
   p.netX = clamp(side * 2.2, -2.8, 2.8);
   p.recoverX = clamp(side * 2.2, -3.0, 3.0);

@@ -8,8 +8,10 @@ import { servingPlayer, serveSide } from './scoring.js';
 import { endPoint, showGameOver } from './match.js';
 import { logPointStart, logEvent } from './logger.js';
 
-// Returns the entity object for the given server index (0=player,1=partner,2=npc,3=npc2)
+// Returns the entity object for the given server index.
+// Doubles: 0=player,1=partner,2=npc,3=npc2. Singles: 0=player,1=npc.
 function serverEntity(sv) {
+  if (G.matchType !== 'doubles') return sv === 0 ? G.player : G.npc;
   return sv === 0 ? G.player : sv === 1 ? G.partner : sv === 2 ? G.npc : G.npc2;
 }
 
@@ -58,6 +60,7 @@ export function setupServe() {
   const dom = sv === 0 ? 1 : -1;
   b.x = (sv === 0 ? P.x : N.x) - dom * 0.22; b.y = 1.3; b.z = sv === 0 ? P.z : N.z;
   b.vx = b.vy = b.vz = 0; b.spin = 0; b.netHit = false; b.isServe = false; b.bounces = 0;
+  b.squashT = 0; b.hitFlash = null;
   G.rally = 0; G.strike = null;
   G.state = 'serve';
   G.serveT = sv === 1 ? rnd(1.0, 1.8) : Infinity;
@@ -78,10 +81,14 @@ function setupServeDoubles(sv, side) {
   const svEnt = entities[sv];
   const svTeam = sv < 2 ? 0 : 1;
 
-  // Determine receiver entity index
-  const recvIdx = svTeam === 0
-    ? (G.receiveCpu === 0 ? 2 : 3)
-    : (G.receiveHuman === 0 ? 0 : 1);
+  const isDeuce = side === 'deuce';
+  const humanDeuce = G.receiveHuman === 0 ? 0 : 1;  // human entity covering the deuce court
+  const humanAd    = humanDeuce === 0 ? 1 : 0;
+  const cpuDeuce   = G.receiveCpu  === 0 ? 2 : 3;    // cpu entity covering the deuce court
+  const cpuAd      = cpuDeuce === 2 ? 3 : 2;
+  const recvIdx = svTeam === 0 ? (isDeuce ? cpuDeuce : cpuAd)
+                               : (isDeuce ? humanDeuce : humanAd);
+  G.receiverEntity = recvIdx;
   const recvEnt = entities[recvIdx];
 
   // Determine partner indices (teammate of server/receiver)
@@ -89,8 +96,6 @@ function setupServeDoubles(sv, side) {
   const recvPartnerIdx = recvIdx < 2 ? (recvIdx === 0 ? 1 : 0) : (recvIdx === 2 ? 3 : 2);
   const svPartnerEnt = entities[svPartnerIdx];
   const recvPartnerEnt = entities[recvPartnerIdx];
-
-  const isDeuce = side === 'deuce';
   const d = DIFF[G.diffKey];
 
   // Server lateral: deuce = +x for human team, deuce = -x for cpu team (mirrored courts)
@@ -164,6 +169,7 @@ function setupServeDoubles(sv, side) {
   const dom = svTeam === 0 ? 1 : -1;
   b.x = svEnt.x - dom * 0.22; b.y = 1.3; b.z = svEnt.z;
   b.vx = b.vy = b.vz = 0; b.spin = 0; b.netHit = false; b.isServe = false; b.bounces = 0;
+  b.squashT = 0; b.hitFlash = null;
   G.rally = 0; G.strike = null;
   G.state = 'serve';
 
@@ -212,7 +218,7 @@ export function fireServe(sv, q, contactY, type) {
   }
   const ST = SERVE_TYPE[type || 'flat'];
   const safety = ST.spin !== 0 ? 0.75 : 1;
-  const svTeam = sv < 2 ? 0 : 1;
+  const svTeam = G.matchType === 'doubles' ? (sv < 2 ? 0 : 1) : sv;
   const svEnt = serverEntity(sv);
   const serveFault = sv === 0 && ST.fault && Math.random() < (ST.fault[q] || 0);
   let speed, sx, tx, tz;
@@ -271,7 +277,7 @@ export function fireServe(sv, q, contactY, type) {
     predicted: predictLanding(),
   });
   const serveSoundType = type === 'kick' ? 'topspin' : (type === 'slice' ? 'slice' : 'flat');
-  sHit(serveSoundType, speed); refreshHUD();
+  sHit(serveSoundType, speed, { isServe: true }); refreshHUD();
   svEnt.anim = { t: 0.18, side: svTeam === 0 ? 1 : -1, type: 'serve' };
 }
 
@@ -290,7 +296,8 @@ export function fault() {
     wait(1.4, setupServe);
   } else {
     G.serveNum = 1;
-    const winTeam = sv < 2 ? 1 : 0; // opposite team wins on double fault
+    const svTeam = G.matchType === 'doubles' ? (sv < 2 ? 0 : 1) : sv;
+    const winTeam = 1 - svTeam; // opposite team wins on double fault
     endPoint(winTeam, 'Double Fault');
   }
 }
@@ -304,7 +311,7 @@ export function updateToss(dt) {
   const t = G.toss; t.t += dt;
   const sv = t.by;
   const svEnt = serverEntity(sv);
-  const svTeam = sv < 2 ? 0 : 1;
+  const svTeam = G.matchType === 'doubles' ? (sv < 2 ? 0 : 1) : sv;
   const dom = svTeam === 0 ? 1 : -1;
   const phT = Math.min(1, t.t / 0.5);
   G.ball.held = true; G.ball.active = false;

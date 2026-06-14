@@ -32,19 +32,59 @@ function lineRect(x1, z1, x2, z2) {
 }
 
 function drawCourt() {
+  // Sky with subtle horizon warmth
   const sky = ctx.createLinearGradient(0,0,0,H*0.36);
-  sky.addColorStop(0,'#0d1a2e'); sky.addColorStop(1,'#1d3a55');
+  sky.addColorStop(0,'#0d1a2e'); sky.addColorStop(0.65,'#1d3a55'); sky.addColorStop(1,'#263f58');
   ctx.fillStyle = sky; ctx.fillRect(0,0,W,H*0.36);
+
   const wb = proj(0,0,-16);
   const wallBase = wb ? wb.y : 170;
-  ctx.fillStyle = '#15243c'; ctx.fillRect(0, wallBase-72, W, 72);
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
-  for (let i = 1; i < 5; i++) ctx.fillRect(0, wallBase-72+i*14, W, 2);
+
+  // Crowd stands — 4 rows of alternating seat clusters
+  const rowH = 13, rowY0 = wallBase - 72;
+  const rowCols = [['#1a3560','#15294e'],['#1c3a68','#172d55'],['#1e3e72','#18305c'],['#17305a','#122648']];
+  for (let r = 0; r < 4; r++) {
+    const y = rowY0 + r * rowH;
+    const [ca, cb] = rowCols[r];
+    for (let x = 0; x < W; x += 18) {
+      ctx.fillStyle = (Math.floor(x/18) + r) % 2 === 0 ? ca : cb;
+      ctx.fillRect(x, y, 18, rowH);
+    }
+    // Crowd heads: tiny ovals suggesting people
+    ctx.fillStyle = `rgba(200,185,165,0.18)`;
+    for (let x = 5; x < W; x += 18) ctx.fillRect(x, y + 1, 7, 4);
+  }
+  // Remaining wall strip below crowd
+  ctx.fillStyle = '#12223a'; ctx.fillRect(0, wallBase-20, W, 20);
   ctx.fillStyle = '#0e3a2e'; ctx.fillRect(0, wallBase-14, W, 14);
   ctx.fillStyle = '#1c4a35'; ctx.fillRect(0, wallBase, W, H-wallBase);
+
   quadWorld(-13,-15.9,13,17.4,'#256648');
   quadWorld(-7.2,-14.2,7.2,16.8,'#2e7a55');
   quadWorld(-DW,-HL,DW,HL,'#2f6fb3');
+
+  // Court surface radial gradient overlay — lighter center, darker edges
+  const cc = proj(0,0,0), cf = proj(0,0,HL);
+  if (cc && cf) {
+    const cg = ctx.createRadialGradient(cc.x, cc.y, 0, cc.x, cc.y, Math.hypot(cc.x-cf.x, cc.y-cf.y)*1.3);
+    cg.addColorStop(0,'rgba(80,130,200,0.12)'); cg.addColorStop(1,'rgba(0,0,0,0.10)');
+    const a2 = proj(-DW,0,-HL), b2 = proj(DW,0,-HL), c2 = proj(DW,0,HL), d2 = proj(-DW,0,HL);
+    if (a2&&b2&&c2&&d2) {
+      ctx.fillStyle = cg; ctx.beginPath();
+      ctx.moveTo(a2.x,a2.y); ctx.lineTo(b2.x,b2.y); ctx.lineTo(c2.x,c2.y); ctx.lineTo(d2.x,d2.y);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // Bounce marks — faint ellipses at recent ball landing spots
+  for (const bm of G.bounceMarks) {
+    bm.age += 0.016;
+    const bp = proj(bm.x, 0.01, bm.z); if (!bp) continue;
+    const ba = Math.max(0, 0.32 - bm.age * 0.5);
+    ctx.fillStyle = `rgba(255,255,255,${ba})`;
+    ctx.beginPath(); ctx.ellipse(bp.x, bp.y, bp.s*0.22, bp.s*0.08, 0, 0, 7); ctx.fill();
+  }
+
   lineRect(-DW,HL,DW,HL); lineRect(-DW,-HL,DW,-HL);
   lineRect(-DW,-HL,-DW,HL); lineRect(DW,-HL,DW,HL);
   lineRect(-SW,-HL,-SW,HL); lineRect(SW,-HL,SW,HL);
@@ -76,8 +116,16 @@ function drawNet() {
   [-NETX, NETX].forEach(x => {
     const t = proj(x, netHeight(x)+0.05, 0), g = proj(x, 0, 0);
     if (!t||!g) return;
-    ctx.strokeStyle = '#11202e'; ctx.lineWidth = Math.max(2.5, g.s*0.07);
-    ctx.beginPath(); ctx.moveTo(g.x,g.y); ctx.lineTo(t.x,t.y); ctx.stroke();
+    const pw = Math.max(3.5, g.s*0.075);
+    // Post body
+    ctx.fillStyle = '#1a2d40';
+    ctx.fillRect(g.x - pw/2, t.y, pw, g.y - t.y);
+    // Left highlight edge (cylinder illusion)
+    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    ctx.fillRect(g.x - pw/2, t.y, pw * 0.28, g.y - t.y);
+    // Post cap
+    ctx.fillStyle = '#b0bcc8';
+    ctx.fillRect(g.x - pw/2 - 1, t.y - 3, pw + 2, 4);
   });
 }
 
@@ -90,13 +138,26 @@ function drawShadow(x, z, r, alpha) {
 function drawBall() {
   const b = G.ball;
   if (!b.active && !b.held) return;
+
+  // Elongated directional trail — ovals oriented along travel direction
   for (let i = 0; i < b.trail.length; i++) {
     const t = b.trail[i], p = proj(t.x,t.y,t.z); if (!p) continue;
-    const a = (i / b.trail.length) * 0.3;
+    const ni = b.trail[Math.min(i+1, b.trail.length-1)];
+    const np = proj(ni.x,ni.y,ni.z);
+    const a = (i / b.trail.length) * 0.32;
     ctx.fillStyle = `rgba(220,255,120,${a})`;
-    ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(1,p.s*0.05),0,7); ctx.fill();
+    if (np) {
+      const dx = np.x - p.x, dy = np.y - p.y;
+      const ang = Math.atan2(dy, dx);
+      const len = Math.max(Math.hypot(dx, dy) * 0.65, p.s * 0.04);
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, Math.max(len, p.s*0.04), Math.max(1, p.s*0.032), ang, 0, 7); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(p.x,p.y,Math.max(1,p.s*0.05),0,7); ctx.fill();
+    }
   }
+
   drawShadow(b.x, b.z, 0.16, clamp(0.45-b.y*0.05, 0.08, 0.45));
+
   if (b.active && !b.held && b.vz > 0.5) {
     const L = predictLanding();
     if (L) {
@@ -111,12 +172,30 @@ function drawBall() {
       }
     }
   }
+
   const p = proj(b.x,b.y,b.z); if (!p) return;
   const r = Math.max(2.4, p.s*0.085);
+
+  // Squash on bounce: briefly flatten horizontally
+  const sq = b.squashT > 0 ? clamp(b.squashT / 0.14, 0, 1) : 0;
+  const rx = r * (1 + sq * 0.42), ry = r * (1 - sq * 0.28);
   const gr = ctx.createRadialGradient(p.x-r*0.3,p.y-r*0.3,r*0.2,p.x,p.y,r);
   gr.addColorStop(0,'#f4ff9e'); gr.addColorStop(1,'#b8d018');
   ctx.fillStyle = gr;
-  ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(p.x, p.y, rx, ry, 0, 0, 7); ctx.fill();
+
+  // Hit flash: expanding ring at contact point
+  if (b.hitFlash) {
+    const ft = b.hitFlash.t / 0.28;
+    const fp2 = proj(b.hitFlash.x, b.hitFlash.y, b.hitFlash.z);
+    if (fp2) {
+      const alpha = (1 - ft) * 0.75;
+      const fr = r * (1 + ft * 4.0);
+      ctx.strokeStyle = `rgba(255,255,200,${alpha})`;
+      ctx.lineWidth = Math.max(1, (1-ft) * 2.8);
+      ctx.beginPath(); ctx.arc(fp2.x, fp2.y, fr, 0, 7); ctx.stroke();
+    }
+  }
 }
 
 function drawChargeIndicator() {
@@ -165,6 +244,16 @@ function drawChargeIndicator() {
   } else if (inWin) {
     ctx.fillStyle = 'rgba(61,240,168,0.98)'; ctx.fillText('RELEASE', fp.x, cueY);
   }
+
+  // Release pulse: expanding ring that fires when charge is released
+  const rp = G.player.releasePulse;
+  if (rp) {
+    const rt = rp.t / 0.35;
+    const rR = R * (1 + rt * 2.2), rRy = rR * 0.34;
+    ctx.strokeStyle = `rgba(255,255,180,${(1-rt)*0.85})`;
+    ctx.lineWidth = Math.max(1.5, (1-rt) * fp.s * 0.08);
+    ctx.beginPath(); ctx.ellipse(fp.x, fp.y, rR, rRy, 0, 0, 7); ctx.stroke();
+  }
 }
 
 function drawServeRing() {
@@ -179,16 +268,44 @@ function drawServeRing() {
   ctx.beginPath(); ctx.arc(p.x,p.y,R,0,7); ctx.stroke();
 }
 
+let _lastRenderT = 0;
+
+function drawParticles() {
+  const now = performance.now() / 1000;
+  const dt = _lastRenderT > 0 ? Math.min(now - _lastRenderT, 0.05) : 0.016;
+  _lastRenderT = now;
+  const alive = [];
+  for (const pt of G.particles) {
+    pt.age += dt;
+    if (pt.age >= pt.maxAge) continue;
+    pt.x += pt.vx * dt; pt.z += pt.vz * dt;
+    pt.vx *= 0.84; pt.vz *= 0.84;
+    alive.push(pt);
+    const pp = proj(pt.x, 0.04, pt.z); if (!pp) continue;
+    const pf2 = 1 - pt.age / pt.maxAge;
+    const pr = Math.max(1, pp.s * 0.038 * pf2);
+    ctx.fillStyle = `rgba(175,200,220,${pf2 * 0.55})`;
+    ctx.beginPath(); ctx.ellipse(pp.x, pp.y, pr*1.7, pr*0.6, 0, 0, 7); ctx.fill();
+  }
+  G.particles.length = 0;
+  for (const pt of alive) G.particles.push(pt);
+}
+
 function drawFb() {
   if (!G.fb) return;
   const p = proj(G.player.x, 2.15, G.player.z); if (!p) return;
-  const a = 1 - G.fb.age / 0.85;
-  ctx.globalAlpha = Math.max(0, a);
-  ctx.font = `700 ${Math.max(11, p.s*0.3)}px "Avenir Next",sans-serif`;
+  const age = G.fb.age, dur = 0.85;
+  const fade = 1 - age / dur;
+  // Scale-up: starts large (1.6x) and settles to 1x in first 0.12s, then fades
+  const scaleT = Math.max(0, 1 - age / 0.12);
+  const scale = 1 + scaleT * 0.6;
+  const baseSize = Math.max(11, p.s * 0.3);
+  ctx.globalAlpha = Math.max(0, fade);
+  ctx.font = `700 ${baseSize * scale}px "Avenir Next",sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillStyle = G.fb.col;
   ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 6;
-  ctx.fillText(G.fb.txt, p.x, p.y - G.fb.age*34);
+  ctx.fillText(G.fb.txt, p.x, p.y - age*34);
   ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 }
 
@@ -238,6 +355,10 @@ function drawChar(e, colorKey, entityIdx) {
   ctx.strokeStyle = '#1d2b38'; ctx.lineWidth = Math.max(2, s*0.085);
   if (fpA) { ctx.beginPath(); ctx.moveTo(pf.x-s*0.1, yAt(0.8)); ctx.lineTo(fpA.x, fpA.y); ctx.stroke(); }
   if (fpB) { ctx.beginPath(); ctx.moveTo(pf.x+s*0.1, yAt(0.8)); ctx.lineTo(fpB.x, fpB.y); ctx.stroke(); }
+  // Shoes
+  ctx.fillStyle = '#ddd8cc';
+  if (fpA) { ctx.beginPath(); ctx.ellipse(fpA.x, fpA.y, Math.max(2.5, s*0.105), Math.max(1.4, s*0.042), 0, 0, 7); ctx.fill(); }
+  if (fpB) { ctx.beginPath(); ctx.ellipse(fpB.x, fpB.y, Math.max(2.5, s*0.105), Math.max(1.4, s*0.042), 0, 0, 7); ctx.fill(); }
 
   const drawBody = () => {
     ctx.strokeStyle = shorts; ctx.lineWidth = Math.max(3, s*0.24);
@@ -268,8 +389,8 @@ function drawChar(e, colorKey, entityIdx) {
     const c = a.contact;
     if (a.type === 'smash' || a.type === 'serve') {
       const t = a.t;
-      const He = c ? [c[0]*0.5, Math.max(1.6, c[1]-0.6), c[2]*0.5] : [dom*0.1, 2.05, fwd*0.2];
-      const Te = c ? c : [dom*0.04, 2.7, fwd*0.45];
+      const He = c ? [c[0]*0.5, Math.max(1.5, c[1]-0.6), c[2]*0.5] : [dom*0.1, 1.9, fwd*0.2];
+      const Te = c ? c : [dom*0.04, 2.2, fwd*0.45];
       if (t < 0.09) { const u = t/0.09;
         H2 = KF([dom*0.3,1.4,-fwd*0.3],[dom*0.3,1.55,-fwd*0.35],u);
         T  = KF([dom*0.4,1.95,-fwd*0.5],[dom*0.42,2.05,-fwd*0.55],u); }
@@ -293,20 +414,20 @@ function drawChar(e, colorKey, entityIdx) {
       if (fh) {
         // Forehand: unit turn on take-back, racket drops below hand (eastern grip),
         // explosive swing through contact, full wrap-around follow-through.
-        const Kb  = [sd*0.58, 0.88, -fwd*0.52];
-        const KbT = [sd*0.90, 0.68, -fwd*0.74];
-        const KbE = [sd*0.60, 0.80, -fwd*0.16];
+        const Kb  = [sd*0.50, 0.98, -fwd*0.32];
+        const KbT = [sd*0.68, 0.80, -fwd*0.46];
+        const KbE = [sd*0.42, 0.94, -fwd*0.18];
         const Kc  = c ? [c[0]*0.58, Math.max(0.85,c[1]-0.18), c[2]*0.55] : [sd*0.52, 1.05, fwd*0.16];
         const KcT = c ? c : [sd*0.80, 1.10, fwd*0.40];
         const KcE = [sd*0.50, 0.90, fwd*0.02];
         const Kf  = [-sd*0.40, 1.80, fwd*0.36];
-        const KfT = [-sd*0.58, 1.90, fwd*0.50];
+        const KfT = [-sd*0.42, 2.08, fwd*0.46];
         const KfE = [-sd*0.08, 1.56, fwd*0.28];
         if (a.charging) {
-          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          H2=Kb; T=KbT; shoulderTurn=-sd*0.30;
           off = [-sd*0.38, 1.32, -fwd*0.14];
         } else if (t<0.04) {
-          H2=Kb; T=KbT; E=KbE; shoulderTurn=-sd*0.30;
+          H2=Kb; T=KbT; shoulderTurn=-sd*0.30;
           off = [-sd*0.38, 1.32, -fwd*0.14];
         } else if (t<0.10) {
           const u=(t-0.04)/0.06, uu=u*u;
@@ -322,9 +443,9 @@ function drawChar(e, colorKey, entityIdx) {
         }
       } else {
         // Backhand: shoulder coil toward ball side, higher finish than before.
-        const Kb  = [sd*0.48*rch, 0.90, -fwd*0.48];
-        const KbT = [sd*0.82*rch, 1.00, -fwd*0.70];
-        const KbE = [sd*0.40*rch, 0.82, -fwd*0.22];
+        const Kb  = [sd*0.40*rch, 0.96, -fwd*0.28];
+        const KbT = [sd*0.62*rch, 1.02, -fwd*0.44];
+        const KbE = [sd*0.34*rch, 0.88, -fwd*0.14];
         const Kc  = c ? [c[0]*0.60*rch, Math.max(0.78,c[1]-0.18), c[2]*0.60*rch] : [sd*0.52*rch, 1.00, fwd*0.40];
         const KcT = c ? c : [sd*1.0, 1.05, fwd*0.62];
         const KcE = [sd*0.32*rch, 0.88, fwd*0.18];
@@ -332,9 +453,9 @@ function drawChar(e, colorKey, entityIdx) {
         const KfT = [-sd*0.52, 1.84, fwd*0.30];
         const KfE = [-sd*0.10*rch, 1.46, fwd*0.32];
         if (a.charging) {
-          H2=Kb; T=KbT; E=KbE; shoulderTurn=sd*0.24;
+          H2=Kb; T=KbT; shoulderTurn=sd*0.24;
         } else if (t<0.04) {
-          H2=Kb; T=KbT; E=KbE; shoulderTurn=sd*0.24;
+          H2=Kb; T=KbT; shoulderTurn=sd*0.24;
         } else if (t<0.10) {
           const u=(t-0.04)/0.06, uu=u*u;
           H2=KF(Kb,Kc,uu); T=KF(KbT,KcT,uu); E=KF(KbE,KcE,uu);
@@ -389,22 +510,43 @@ function drawChar(e, colorKey, entityIdx) {
       if (ep) ctx.lineTo(ep.x,ep.y);
       ctx.lineTo(hp.x,hp.y); ctx.stroke();
     } else {
-      const domSh = (H2[0] >= 0) ? shR : shL;
+      const domSh = dom > 0 ? shR : shL;
+      const offSh = dom > 0 ? shL : shR;
       ctx.beginPath(); ctx.moveTo(domSh.x,domSh.y);
       if (ep) ctx.lineTo(ep.x,ep.y);
       ctx.lineTo(hp.x,hp.y); ctx.stroke();
       if (off) { const op = proj(e.x+off[0],off[1],e.z+off[2]);
-        if (op) { op.x += lean; const oSh = (off[0] >= 0) ? shR : shL;
-          ctx.beginPath(); ctx.moveTo(oSh.x,oSh.y); ctx.lineTo(op.x,op.y); ctx.stroke(); } }
+        if (op) { op.x += lean;
+          ctx.beginPath(); ctx.moveTo(offSh.x,offSh.y); ctx.lineTo(op.x,op.y); ctx.stroke(); } }
     }
     const ang = Math.atan2(tp.y-hp.y, tp.x-hp.x);
+    // Racket shaft
     ctx.strokeStyle = '#caa36a'; ctx.lineWidth = Math.max(1.5, tp.s*0.05);
     ctx.beginPath(); ctx.moveTo(hp.x,hp.y); ctx.lineTo(tp.x,tp.y); ctx.stroke();
-    const hx = tp.x + Math.cos(ang)*tp.s*0.12, hy = tp.y + Math.sin(ang)*tp.s*0.12;
-    ctx.fillStyle = 'rgba(215,228,240,0.3)';
-    ctx.strokeStyle = '#dfe8ef'; ctx.lineWidth = Math.max(1.5, tp.s*0.045);
-    ctx.beginPath(); ctx.ellipse(hx,hy,Math.max(3,tp.s*0.16),Math.max(2.2,tp.s*0.11),ang,0,7);
-    ctx.fill(); ctx.stroke();
+    // Racket head: larger oval with string grid
+    const hx = tp.x + Math.cos(ang)*tp.s*0.15, hy = tp.y + Math.sin(ang)*tp.s*0.15;
+    const headRx = Math.max(3.5, tp.s*0.155), headRy = Math.max(2.2, tp.s*0.10);
+    ctx.fillStyle = 'rgba(215,228,240,0.22)';
+    ctx.strokeStyle = '#dfe8ef'; ctx.lineWidth = Math.max(1.5, tp.s*0.05);
+    ctx.beginPath(); ctx.ellipse(hx,hy,headRx,headRy,ang,0,7); ctx.fill(); ctx.stroke();
+    // String lines
+    const perp = ang + Math.PI/2;
+    const cxa = Math.cos(ang), cya = Math.sin(ang), cxp = Math.cos(perp), cyp = Math.sin(perp);
+    ctx.strokeStyle = 'rgba(255,255,255,0.30)'; ctx.lineWidth = Math.max(0.5, tp.s*0.018);
+    for (let i = -1; i <= 1; i++) {
+      const ox = cxp*i*headRy*0.48, oy = cyp*i*headRy*0.48;
+      ctx.beginPath();
+      ctx.moveTo(hx+ox-cxa*headRx*0.82, hy+oy-cya*headRx*0.82);
+      ctx.lineTo(hx+ox+cxa*headRx*0.82, hy+oy+cya*headRx*0.82);
+      ctx.stroke();
+    }
+    for (let i = -1; i <= 1; i++) {
+      const ox = cxa*i*headRx*0.38, oy = cya*i*headRx*0.38;
+      ctx.beginPath();
+      ctx.moveTo(hx+ox-cxp*headRy*0.82, hy+oy-cyp*headRy*0.82);
+      ctx.lineTo(hx+ox+cxp*headRy*0.82, hy+oy+cyp*headRy*0.82);
+      ctx.stroke();
+    }
   };
 
   if ((H2[2] + T[2]) / 2 < -0.06) { drawArms(); drawBody(); }
@@ -442,6 +584,7 @@ export function render() {
   if (G.ball.z < 0) drawBall();
   drawNet();
   if (G.ball.z >= 0) { drawBall(); drawServeRing(); }
+  drawParticles();
   inFront.forEach(({ e, ck, idx }) => drawChar(e, ck, idx));
 
   if (G.state === 'live') drawChargeIndicator();

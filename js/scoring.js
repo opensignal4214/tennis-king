@@ -54,14 +54,8 @@ function advanceServeRotation(w) {
     // Advance receive rotation for the team that is now receiving
     const nextServer = G.serveOrder[G.serveOrderIdx % G.serveOrder.length];
     const servingTeam = nextServer < 2 ? 0 : 1;
-    if (servingTeam === 0) {
-      // Human team serves → CPU team receives, advance CPU receiver
-      G.receiveCpu ^= 1;
-    } else {
-      // CPU team serves → Human team receives, advance human receiver
-      G.receiveHuman ^= 1;
-    }
-    // Keep G.server in sync with team for legacy code
+    // Receivers are fixed per side for the whole set (receiveHuman/receiveCpu = deuce-court coverer);
+    // no per-game flip. Keep G.server in sync with team for legacy code.
     G.server = servingTeam;
   } else {
     G.server = 1 - G.server;

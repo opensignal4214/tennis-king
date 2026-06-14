@@ -403,11 +403,14 @@ function drawChar(e, colorKey, entityIdx) {
       off = [-dom*0.18, a.t<0.18?1.75:1.2, fwd*0.1];
     } else if (a.type === 'volley') {
       const u = Math.min(1, a.t/0.06);
-      const He = c ? [c[0]*0.6, Math.max(0.9,c[1]-0.15), c[2]*0.6] : [sd*0.55,1.18,fwd*0.5];
-      const Te = c ? c : [sd*0.78,1.32,fwd*0.72];
-      H2 = KF([sd*0.42,1.32,fwd*0.08],He,u);
-      T  = KF([sd*0.62,1.55,fwd*0.18],Te,u);
-      off = [-sd*0.35,1.22,fwd*0.1];
+      // Use actual contact side so the arm never crosses to the wrong side
+      const cSide = c ? (Math.sign(c[0]) || sd) : sd;
+      const He = c ? [c[0]*0.6, Math.max(1.0,c[1]-0.15), c[2]*0.6] : [cSide*0.55,1.18,fwd*0.5];
+      // Constrain tip to 75% of contact offset to prevent shaft elongation on stretch volleys
+      const Te = c ? [c[0]*0.75, Math.max(0.95,c[1]-0.1), c[2]*0.75] : [cSide*0.78,1.32,fwd*0.72];
+      H2 = KF([cSide*0.42,1.32,fwd*0.08],He,u);
+      T  = KF([cSide*0.62,1.55,fwd*0.18],Te,u);
+      off = [-cSide*0.35,1.22,fwd*0.1];
     } else {
       const t = a.t;
       const rch = two ? 0.66 : 1.0;

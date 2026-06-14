@@ -91,7 +91,10 @@ export function updatePlayer(dt) {
       if (p.anim && b.active && !b.held)
         p.anim.contact = [clamp(b.x - p.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - p.z, -1.35, 1.35)];
       const thr = p.pending.panic ? 0.05 : p.anim && p.anim.type === 'volley' ? 0.06 : p.anim && p.anim.type === 'smash' ? 0.18 : 0.10;
-      if (p.cool <= 0 && canPlayerHit() && p.anim && p.anim.t >= thr) doPlayerHit();
+      // Fire as soon as ball is reachable for ground strokes — prevents timing mismatch
+      // where ball passes through the hit zone before anim.t reaches the full threshold.
+      const fireThr = (p.anim && p.anim.type === 'ground') ? Math.min(thr, 0.05) : thr;
+      if (p.cool <= 0 && canPlayerHit() && p.anim && p.anim.t >= fireThr) doPlayerHit();
     }
   }
 }

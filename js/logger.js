@@ -24,6 +24,7 @@ function snapshot() {
       vx: r3(b.vx), vy: r3(b.vy), vz: r3(b.vz),
       spin: r3(b.spin), bounces: b.bounces,
       netHit: b.netHit, isServe: b.isServe, lastHitter: b.lastHitter,
+      lastHitterEntity: G.lastHitterEntity,
     },
     player: { x: r3(p.x), z: r3(p.z) },
     npc: { x: r3(n.x), z: r3(n.z) },
@@ -58,7 +59,8 @@ export function logPointStart(ctx) {
 
 export function logEvent(type, data) {
   if (!LOG.enabled || !LOG.point) return;
-  LOG.point.events.push({ t: r3(LOG.t), type, ...data, snap: snapshot() });
+  // `type` after the spread so a stray `type` key in data can't clobber the category label.
+  LOG.point.events.push({ t: r3(LOG.t), ...data, type, snap: snapshot() });
 }
 
 let frameN = 0;
@@ -76,10 +78,11 @@ export function logFrame() {
 }
 
 export function logPointEnd(data) {
-  if (!LOG.enabled || !LOG.point) return;
+  if (!LOG.enabled || !LOG.point) return null;
   Object.assign(LOG.point, data, { t1: r3(LOG.t) });
+  const rec = LOG.point;
   const m = curMatch();
-  if (m) m.points.push(LOG.point);
+  if (m) m.points.push(rec);
   LOG.point = null;
   // enforce global point cap
   let total = LOG.matches.reduce((s, mm) => s + mm.points.length, 0);
@@ -88,6 +91,7 @@ export function logPointEnd(data) {
       mm.points.shift(); LOG.droppedPoints++; total--;
     }
   }
+  return rec;
 }
 
 export function downloadLog() {

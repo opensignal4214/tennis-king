@@ -9,12 +9,12 @@ export const G = {
   particles: [],
   bounceMarks: [],
   score:null, server:0, serveNum:1,
-  rally:0, bestRally:0, stats:[0,0],
+  rally:0, bestRally:0, stats:[0,0], matchStats:null,
   pointT:0, next:null, serveT:Infinity, toss:null,
   srvAim:{x:-2.05, z:-4.6},
   npcMem:{serve:{deuce:[],ad:[]}, lastServeRec:null, rallyX:0},
   strike:null, fb:null,
-  mute:false, paused:false, started:false,
+  mute:false, paused:false, started:false, showLandings:false,
   cam:{x:0, y:8.6, z:19.9},
 
   // Doubles mode
@@ -31,7 +31,13 @@ export const G = {
   receiveHuman:0,              // which human-team member receives (0=player,1=partner)
   receiveCpu:0,                // which cpu-team member receives (0=npc,1=npc2)
   receiverEntity:0,            // entity id designated to return THIS serve (set at serve setup)
+
+  // Touch controls (see js/touch.js). enabled auto-set on coarse-pointer devices.
+  // move/swing hold the live thumb gesture state, read by render.js for the overlay.
+  touch:{ enabled:false, move:null, swing:null, hintT:0 },
 };
 window.G = G;
 
 export const keys = {};
+// Exposed for the e2e suite, which asserts on the synthesised key state.
+window.keys = keys;

@@ -11,6 +11,7 @@ export const msgEl    = $('msg');
 export const msgMain  = $('msgMain');
 export const msgSub   = $('msgSub');
 export const shotEl   = $('shotlbl');
+export const liveEl   = $('livestats');
 
 let msgTimer = 0;
 let shotTimer = 0;
@@ -27,6 +28,27 @@ export function showShot(txt) {
 export function fb(txt, col) {
   G.fb = { txt, col, age: 0 };
 }
+
+// Broadcast-style strip (top-right). Persists like a TV lower-third: it stays up
+// and is replaced when the next point ends — it does not fade on a timer.
+// Match mode only — rally mode has its own #rallyhud.
+export function flashLiveStats() {
+  const S = G.matchStats;
+  if (!S || G.mode === 'rally') { liveEl.style.opacity = 0; return; }
+  const pill = t => `<span class="ls-pill">${t}</span>`;
+  const spd = G._lastServeKmh ? pill(`🎾 ${G._lastServeKmh} km/h`) : '';
+  const onStreak = S.streak[0] >= 2 ? 0 : S.streak[1] >= 2 ? 1 : -1;
+  const streak = onStreak >= 0
+    ? `<span class="ls-pill ${onStreak === 0 ? 'good' : 'bad'}">▲ ${S.streak[onStreak]} ${onStreak === 0 ? 'You' : 'CPU'}</span>`
+    : '';
+  liveEl.innerHTML = spd
+    + pill(`Rally ${G.rally}`)
+    + pill(`W ${S.winners[0]}–${S.unforced[0]} UE`)
+    + streak;
+  liveEl.style.opacity = 1;
+}
+
+export function hideLiveStats() { liveEl.style.opacity = 0; liveEl.innerHTML = ''; }
 
 export function tickHud(dt) {
   if (msgTimer > 0) { msgTimer -= dt; if (msgTimer <= 0) msgEl.style.opacity = 0; }

@@ -32,8 +32,15 @@ export function hitBall(hitter, tx, tz, speed, spin, clear, shotType) {
     predMargin = { dz: HL - Math.abs(L.z), dx: halfW - Math.abs(L.x) };
     predIn = predMargin.dz >= 0 && predMargin.dx >= 0;
   }
+  // Forehand vs backhand: which side of the body the ball was contacted. Players on
+  // the far side (team 1) face the opposite way, so the contact-sign is mirrored.
+  const hEnt = G.lastHitterEntity;
+  const hx = (G.matchType === 'doubles'
+    ? (hEnt === 0 ? G.player : hEnt === 1 ? G.partner : hEnt === 2 ? G.npc : G.npc2)
+    : (hitter === 0 ? G.player : G.npc))?.x ?? b.x;
+  const fore = hitter === 0 ? (b.x - hx) >= 0 : (b.x - hx) <= 0;
   logEvent('hit', {
-    hitter, target: { tx, tz }, speed, spin, clear, shotType, rally: G.rally,
+    hitter, target: { tx, tz }, speed, spin, clear, shotType, rally: G.rally, fore,
     v: { vx: v.vx, vy: v.vy, vz: v.vz }, predicted: L, predIn, predMargin,
   });
   sHit(shotType, speed, { hitter });

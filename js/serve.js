@@ -7,6 +7,7 @@ import { hintEl, showMsg, showShot, fb, refreshHUD } from './hud.js';
 import { servingPlayer, serveSide } from './scoring.js';
 import { endPoint, showGameOver } from './match.js';
 import { logPointStart, logEvent } from './logger.js';
+import { kmh } from './stats.js';
 
 // Returns the entity object for the given server index.
 // Doubles: 0=player,1=partner,2=npc,3=npc2. Singles: 0=player,1=npc.
@@ -69,7 +70,9 @@ export function setupServe() {
   hintEl.style.display = 'block';
   if (sv === 0) {
     hintEl.innerHTML = (G.mode === 'rally' ? '' : `${G.serveNum === 1 ? '1st' : '2nd'} serve · ${side} court — `)
-      + '<b>WASD</b> move · <b>Shift+WASD</b> aim · <b>SPACE</b> toss · strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat';
+      + (G.touch?.enabled
+        ? 'Left pad <b>drag</b> to aim · Right pad <b>tap</b> to toss, <b>tap</b> again to strike (high=kick · mid=slice · low=flat)'
+        : '<b>WASD</b> move · <b>Shift+WASD</b> aim · <b>SPACE</b> toss · strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat');
   } else {
     hintEl.innerHTML = 'CPU to serve — get ready';
   }
@@ -183,7 +186,9 @@ function setupServeDoubles(sv, side) {
   hintEl.style.display = 'block';
   if (sv === 0) {
     hintEl.innerHTML = (G.mode === 'rally' ? '' : `${G.serveNum === 1 ? '1st' : '2nd'} serve · ${side} court — `)
-      + '<b>WASD</b> move · <b>Shift+WASD</b> aim · <b>SPACE</b> toss · strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat';
+      + (G.touch?.enabled
+        ? 'Left pad <b>drag</b> to aim · Right pad <b>tap</b> to toss, <b>tap</b> again to strike (high=kick · mid=slice · low=flat)'
+        : '<b>WASD</b> move · <b>Shift+WASD</b> aim · <b>SPACE</b> toss · strike: <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat');
   } else if (svTeam === 0) {
     hintEl.innerHTML = 'Your partner is serving — get ready';
   } else {
@@ -274,9 +279,11 @@ export function fireServe(sv, q, contactY, type) {
     if (G.player) G.player.recover = 0;
     if (G.partner) G.partner.recover = 0;
   }
+  const vmag = Math.hypot(b.vx, b.vy, b.vz);   // m/s — actual ball speed off the racket
+  G._lastServeKmh = kmh(vmag);
   logEvent('serve', {
-    server: sv, serveNum: G.serveNum, q, type: type || 'flat',
-    speed, target: { tx, tz }, aim: { ax, az }, curve, contactY: b.y,
+    server: sv, serveNum: G.serveNum, q, serveType: type || 'flat',
+    speed, vmag, target: { tx, tz }, aim: { ax, az }, curve, contactY: b.y,
     predicted: predictLanding(),
   });
   const serveSoundType = type === 'kick' ? 'topspin' : (type === 'slice' ? 'slice' : 'flat');

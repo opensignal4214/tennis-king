@@ -1,4 +1,14 @@
-export const W=960, H=600, CX=480, CY=212, FOC=560;
+export const H=600, CY=212, FOC=560;
+// W and CX are derived from the window aspect ratio so the canvas fills the
+// screen without distortion: the court is drawn via proj() (FOC/CX/CY only),
+// so widening W just reveals more stadium on the sides — the court stays put.
+export let W=960, CX=480;
+export function setViewport() {
+  const aspect = (typeof window !== 'undefined' && window.innerHeight)
+    ? window.innerWidth / window.innerHeight : 16/10;
+  W = Math.round(H * Math.min(2.6, Math.max(1.3, aspect)));
+  CX = W / 2;
+}
 export const COLORS={
   teal:  {shirt:'#2dd9c0',shirtHi:'#54f0d8',shirtLo:'#179f8c',shorts:'#0e5f54',shortsHi:'#15826f',shortsLo:'#073d36'},
   coral: {shirt:'#ff6b57',shirtHi:'#ff8f7e',shirtLo:'#d44a38',shorts:'#7e2c20',shortsHi:'#a13d2e',shortsLo:'#561a12'},
@@ -27,6 +37,22 @@ export const TOSS_APEX=0.57;
 export const CHARGE_FULL=0.5;
 export const CHARGE_MIN_POW=0.62;
 export const CHARGE_MAX_POW=1.30;
+// Touch controls (js/touch.js). All distances are in logical canvas units (W×H).
+export const TOUCH={
+  DEAD:38,          // deadzone radius: below this a drag counts as "no flick"
+  MOVE_R:78,        // visual joystick radius / clamp for the knob and serve-aim
+  ZONE_SPLIT:0.5,   // fraction of W: left of this = move pad, right = swing pad
+  TOP_GUARD:0.26,   // fraction of H kept clear at the top (score/menu) — taps above ignored
+  DEFAULT_KEY:'KeyJ', // shot fired when the swing is released with no flick (topspin)
+  // Wedge anchors for the swing dial: angle measured with up = +90° (atan2(-dy,dx)).
+  WEDGE:[
+    { key:'KeyI',      a:90  }, // lob   — up
+    { key:'KeyJ',      a:135 }, // topspin — up-left
+    { key:'KeyK',      a:180 }, // slice — left
+    { key:'KeyL',      a:225 }, // flat  — down-left
+    { key:'Semicolon', a:270 }, // drop  — down
+  ],
+};
 export const SERVE_TYPE={
   flat: {m:1.05, clr:0.05, spin:0,  curve:0,    label:'Flat Serve',     tol:0.5,  fault:{perfect:0, good:0.20, ok:0.55, weak:0.85}},
   kick: {m:0.75, clr:0.50, spin:1,  curve:-0.6, label:'Top Spin Serve', tol:1.15, fault:{perfect:0, good:0.00, ok:0.00, weak:0.25}},

@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Plans & design docs
+
+The **why and how** behind features lives in [plans/](plans/) — see
+[plans/README.md](plans/README.md) for the index. The source explains *what* the
+game does; these docs explain *why it was built that way* and *how a feature was
+intended to work*. When you need a feature's rationale, intended behaviour, or
+build steps, **look in `plans/` first**, then cross-check the cited source.
+
+Every new plan / design doc must be saved in `plans/` (never the repo root) and
+added to its index — the `plan-docs` skill is the checklist. `GUIDE.md` is the
+separate source-derived player guide, kept current by the `guide-sync` skill.
+
 ## Running the game
 
 Open `index.html` directly in a browser. There is no build step, bundler, package manager, or test suite. ES modules are used, so Chrome/Firefox/Safari work natively; if you need a local server (some browsers block file:// module imports), run:

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Court King — Semi-3D Tennis</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -10,32 +10,36 @@
 <div id="wrap">
   <canvas id="cv" width="960" height="600"></canvas>
   <div class="overlay">
-    <div id="help"><b>H</b> controls &nbsp;·&nbsp; <b>M</b> sound &nbsp;·&nbsp; <b>Esc</b> menu</div>
+    <div id="help"><b>H</b> controls &nbsp;·&nbsp; <b>Tab</b> stats &nbsp;·&nbsp; <b>Z</b> shot map &nbsp;·&nbsp; <b>Esc</b> menu</div>
+    <button id="touchPause" class="touch-only" aria-label="Menu">☰</button>
     <div id="hud"></div>
     <div id="rallyhud"></div>
     <div id="servehint"></div>
     <div id="msg"><span id="msgMain"></span><span class="sub" id="msgSub"></span></div>
     <div id="shotlbl"></div>
+    <div id="livestats"></div>
     <div id="gamepadStatus"></div>
     <div id="controlsCard">
       <div class="ctrl-head">Controls <span class="ctrl-hint">[H] hide</span></div>
       <table class="ctrl-table">
         <thead class="gp-only">
-          <tr><th></th><th class="ctrl-gp-col">🎮</th><th></th></tr>
+          <tr><th></th><th class="ctrl-gp-col">🎮</th><th class="ctrl-touch-col">👆</th><th></th></tr>
         </thead>
         <tbody>
-          <tr><td class="ctrl-key">WASD</td><td class="ctrl-gp-col">L-stick / D-pad</td><td>Move &amp; aim</td></tr>
-          <tr class="gp-only"><td class="ctrl-key">—</td><td class="ctrl-gp-col">R-stick</td><td>Serve aim</td></tr>
-          <tr><td class="ctrl-key">J</td><td class="ctrl-gp-col">✕</td><td>Topspin</td></tr>
-          <tr><td class="ctrl-key">K</td><td class="ctrl-gp-col">□</td><td>Slice</td></tr>
-          <tr><td class="ctrl-key">L</td><td class="ctrl-gp-col">○</td><td>Flat</td></tr>
-          <tr><td class="ctrl-key">I</td><td class="ctrl-gp-col">△</td><td>Lob</td></tr>
-          <tr><td class="ctrl-key">;</td><td class="ctrl-gp-col">R1</td><td>Drop shot</td></tr>
-          <tr><td class="ctrl-key">Esc</td><td class="ctrl-gp-col">Options</td><td>Menu</td></tr>
-          <tr><td class="ctrl-key">M</td><td class="ctrl-gp-col">Create</td><td>Mute</td></tr>
+          <tr><td class="ctrl-key">WASD</td><td class="ctrl-gp-col">L-stick / D-pad</td><td class="ctrl-touch-col">Left pad drag</td><td>Move &amp; aim</td></tr>
+          <tr class="gp-only"><td class="ctrl-key">—</td><td class="ctrl-gp-col">R-stick</td><td class="ctrl-touch-col">Left pad drag</td><td>Serve aim</td></tr>
+          <tr><td class="ctrl-key">J</td><td class="ctrl-gp-col">✕</td><td class="ctrl-touch-col">Swing ↖</td><td>Topspin</td></tr>
+          <tr><td class="ctrl-key">K</td><td class="ctrl-gp-col">□</td><td class="ctrl-touch-col">Swing ←</td><td>Slice</td></tr>
+          <tr><td class="ctrl-key">L</td><td class="ctrl-gp-col">○</td><td class="ctrl-touch-col">Swing ↙</td><td>Flat</td></tr>
+          <tr><td class="ctrl-key">I</td><td class="ctrl-gp-col">△</td><td class="ctrl-touch-col">Swing ↑</td><td>Lob</td></tr>
+          <tr><td class="ctrl-key">;</td><td class="ctrl-gp-col">R1</td><td class="ctrl-touch-col">Swing ↓</td><td>Drop shot</td></tr>
+          <tr><td class="ctrl-key">Esc</td><td class="ctrl-gp-col">Options</td><td class="ctrl-touch-col">☰ button</td><td>Menu</td></tr>
+          <tr><td class="ctrl-key">M</td><td class="ctrl-gp-col">Create</td><td class="ctrl-touch-col">—</td><td>Mute</td></tr>
+          <tr><td class="ctrl-key">Tab</td><td class="ctrl-gp-col">L2</td><td class="ctrl-touch-col">—</td><td>Match stats</td></tr>
+          <tr><td class="ctrl-key">Z</td><td class="ctrl-gp-col">L1</td><td class="ctrl-touch-col">—</td><td>Shot map</td></tr>
         </tbody>
       </table>
-      <div class="ctrl-serve">Serve: J/K/L<span class="ctrl-gp-inline"> or face btn</span> → toss · press again → strike</div>
+      <div class="ctrl-serve">Serve: J/K/L<span class="ctrl-gp-inline"> or face btn</span><span class="ctrl-touch-inline"> · touch: tap right pad to toss, tap again to strike (high=kick, mid=slice, low=flat)</span> → toss · press again → strike</div>
     </div>
   </div>
   <div id="menu">
@@ -51,8 +55,14 @@
       </div>
       <div class="lbl">Play</div>
       <button class="bigbtn" id="resumeBtn">Resume</button>
+      <button class="bigbtn" id="statsBtn" style="display:none">Match Stats<span class="d">Aces · winners · serve % so far</span></button>
       <button class="bigbtn" id="matchBtn">Match Play<span class="d">Real scoring · best of 3 sets · tiebreaks</span></button>
       <button class="bigbtn" id="rallyBtn">Rally Mode<span class="d">Free hitting — keep the ball alive as long as you can</span></button>
+      <div id="touchToggleRow">
+        <div class="lbl">On-screen controls</div>
+        <button class="pill" id="touchToggle">Touch controls: On</button>
+        <div class="touchhint">Turn off if you're using a connected controller</div>
+      </div>
       <div class="ctl">
         <b>Left hand</b> WASD: move, and aim by holding a direction as you swing — A/D pull the ball left/right, W goes deep, S plays it short.<br>
         <b>Right hand</b> strokes (home row): J = top spin · K = slice · L = flat · ; = drop shot · I = lob.<br>
@@ -60,6 +70,7 @@
         <b>Timing:</b> a ring closes on the incoming ball — swing when it's green. Mistimed swings go weak, wide, or long.<br>
         <b>Serve:</b> WASD places the target anywhere in the box, then press <b>J / K / L</b> to toss — press the same key again at the top of the toss to strike:
         J = top spin (slower, safe, bounces high) · K = slice (curves wide, stays low) · L = flat (fastest).
+        <span class="touch-only-inline"><br><b>Touch:</b> left pad = move &amp; aim (hold a direction as you swing). Right pad = swing: press · flick toward a shot (↑ lob, ↖ topspin, ← slice, ↙ flat, ↓ drop), no flick = topspin · hold to charge · lift to hit. Serve: tap the right pad to toss, tap again to strike (tap high = kick, middle = slice, low = flat); aim by dragging the left pad.</span>
       </div>
     </div>
   </div>
@@ -96,6 +107,15 @@
         <button class="bigbtn" id="btnserve">Serve First</button>
         <button class="bigbtn" id="btnreceive">Receive First</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Match stats — dedicated screen shown from the pause menu -->
+  <div id="statsscreen" class="screen" style="display:none">
+    <div class="card statscard">
+      <button class="backbtn" id="statsBack">← Back</button>
+      <h2>Match Stats</h2>
+      <div id="statsContent"></div>
     </div>
   </div>
 </div>

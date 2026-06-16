@@ -3,6 +3,7 @@ import { ac } from './audio.js';
 import { refreshHUD } from './hud.js';
 import { startGame, closeMenu } from './match.js';
 import { COLOR_KEYS, COLORS } from './constants.js';
+import { statsLayout, drawLandingMap, setZones, toggleKind } from './stats.js';
 
 const SCREENS = ['matchtype', 'colorpick', 'cointoss'];
 
@@ -55,6 +56,59 @@ document.getElementById('rallyBtn').addEventListener('click', () => {
   startGame('rally');
 });
 document.getElementById('resumeBtn').addEventListener('click', () => { closeMenu(); });
+
+// Currently-selected landing-map view key (You/CPU/...), defaults to 0 (You).
+const selectedLmKey = () => {
+  const sel = document.querySelector('[data-lm].sel');
+  return sel ? +sel.dataset.lm : 0;
+};
+
+// The stats screen can open from the pause menu (menu behind) or via a hotkey
+// (game paused behind). Track which, so closing restores the right thing.
+function showStatsScreen(viaHotkey) {
+  if (!(G.started && G.matchStats && G.mode === 'match')) return;
+  document.getElementById('statsContent').innerHTML = statsLayout(G.matchStats);
+  document.getElementById('statsscreen').style.display = 'flex';
+  drawLandingMap(document.getElementById('landmap'), selectedLmKey());
+  G._statsHotkey = !!viaHotkey;
+  if (viaHotkey) G.paused = true;
+}
+function closeStatsScreen() {
+  document.getElementById('statsscreen').style.display = 'none';
+  if (G._statsHotkey) { G._statsHotkey = false; closeMenu(); }   // resume the game
+}
+// Quick-key (keyboard or controller): toggle the stats screen over live play.
+export function toggleStats() {
+  const open = document.getElementById('statsscreen').style.display === 'flex';
+  open ? closeStatsScreen() : showStatsScreen(true);
+}
+
+document.getElementById('statsBtn').addEventListener('click', () => showStatsScreen(false));
+document.getElementById('statsBack').addEventListener('click', closeStatsScreen);
+
+// Landing-map You/CPU(/Partner/CPU2) toggle — delegated, works on both surfaces.
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-lm]'); if (!b) return;
+  b.parentElement.querySelectorAll('[data-lm]').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel');
+  drawLandingMap(document.getElementById('landmap'), +b.dataset.lm);
+});
+
+// "Zones %" toggle — overlays the broadcast thirds + landing percentages.
+document.addEventListener('click', e => {
+  const z = e.target.closest('[data-lmzones]'); if (!z) return;
+  z.classList.toggle('sel');
+  setZones(z.classList.contains('sel'));
+  drawLandingMap(document.getElementById('landmap'), selectedLmKey());
+});
+
+// Shot-type filter chips — show/hide serves, groundstrokes, volleys, lobs.
+document.addEventListener('click', e => {
+  const k = e.target.closest('[data-lmkind]'); if (!k) return;
+  k.classList.toggle('sel');
+  toggleKind(k.dataset.lmkind);
+  drawLandingMap(document.getElementById('landmap'), selectedLmKey());
+});
 
 // Match type selection
 document.getElementById('btn1v1').addEventListener('click', () => {

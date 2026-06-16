@@ -1,4 +1,4 @@
-import { W, H, CX, CY, FOC, NETX, PRESS_LEAD, TOSS_APEX, HL, SW, DW, SVC, CHARGE_FULL, COLORS } from './constants.js';
+import { W, H, CX, CY, FOC, NETX, PRESS_LEAD, TOSS_APEX, HL, SW, DW, SVC, CHARGE_FULL, COLORS, TOUCH, setViewport } from './constants.js';
 import { G } from './state.js';
 import { clamp, lerp, netHeight } from './utils.js';
 import { facingAngle, bodyAnchors } from './facing.js';
@@ -12,6 +12,7 @@ const ctx = cv.getContext('2d');
 let RES = 1;
 
 export function resizeCanvas() {
+  setViewport();
   const rect = cv.getBoundingClientRect();
   if (!rect.width) return;
   RES = clamp((rect.width * (window.devicePixelRatio || 1)) / W, 1, 3);
@@ -85,6 +86,19 @@ function drawCourt() {
     const ba = Math.max(0, 0.32 - bm.age * 0.5);
     ctx.fillStyle = `rgba(255,255,255,${ba})`;
     ctx.beginPath(); ctx.ellipse(bp.x, bp.y, bp.s*0.22, bp.s*0.08, 0, 0, 7); ctx.fill();
+  }
+
+  // Opt-in shot-map overlay (toggle Z): your accumulated landings on the live court,
+  // coloured by forehand (orange) / backhand (blue); serves neutral, out ringed red.
+  if (G.showLandings && G.matchStats) {
+    for (const L of G.matchStats.landings[0]) {
+      const lp = proj(L.x, 0.01, L.z); if (!lp) continue;
+      const col = (L.serve || L.fore == null) ? 'rgba(174,185,198,.5)'
+                : L.fore ? 'rgba(232,116,59,.6)' : 'rgba(58,160,224,.6)';
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.ellipse(lp.x, lp.y, lp.s*0.2, lp.s*0.075, 0, 0, 7); ctx.fill();
+      if (!L.in) { ctx.strokeStyle = 'rgba(255,64,64,.7)'; ctx.lineWidth = Math.max(1, lp.s*0.02); ctx.stroke(); }
+    }
   }
 
   lineRect(-DW,HL,DW,HL); lineRect(-DW,-HL,DW,-HL);
@@ -715,6 +729,66 @@ function drawAimMarker() {
   ctx.beginPath(); ctx.ellipse(p.x,p.y,p.s*0.1,p.s*0.045,0,0,7); ctx.fill();
 }
 
+const WEDGE_LABEL = { KeyI: 'lob', KeyJ: 'top', KeyK: 'slice', KeyL: 'flat', Semicolon: 'drop' };
+
+function drawTouchUI() {
+  const T = G.touch;
+  if (!T || !T.enabled) return;
+  if (G.state === 'menu' || G.paused) return;
+  if (T.hintT > 0) T.hintT = Math.max(0, T.hintT - 0.016);
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+  // Rest hints — fade out a few seconds after the player first engages a pad.
+  const hintA = T.hintT > 0 ? 0.12 : 0.22;
+  if (!T.move) {
+    ctx.fillStyle = `rgba(150,200,220,${hintA})`;
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('MOVE / AIM', W * 0.22, H * 0.86);
+    ctx.strokeStyle = `rgba(150,200,220,${hintA})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(W * 0.22, H * 0.78, TOUCH.MOVE_R * 0.7, 0, 7); ctx.stroke();
+  }
+  if (!T.swing) {
+    ctx.fillStyle = `rgba(150,200,220,${hintA})`;
+    ctx.font = '600 13px system-ui, sans-serif';
+    ctx.fillText('SWING', W * 0.82, H * 0.86);
+    ctx.strokeStyle = `rgba(150,200,220,${hintA})`; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(W * 0.82, H * 0.78, TOUCH.MOVE_R * 0.7, 0, 7); ctx.stroke();
+  }
+
+  // Active move joystick: origin ring + clamped knob.
+  if (T.move) {
+    const r = TOUCH.MOVE_R;
+    let kx = T.move.x - T.move.ox, ky = T.move.y - T.move.oy;
+    const d = Math.hypot(kx, ky) || 1; if (d > r) { kx *= r / d; ky *= r / d; }
+    ctx.strokeStyle = 'rgba(90,231,208,0.5)'; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(T.move.ox, T.move.oy, r, 0, 7); ctx.stroke();
+    ctx.fillStyle = 'rgba(90,231,208,0.4)';
+    ctx.beginPath(); ctx.arc(T.move.ox + kx, T.move.oy + ky, r * 0.42, 0, 7); ctx.fill();
+  }
+
+  // Active swing dial: 5 wedge labels around the thumb, latched one lit, charge ring.
+  if (T.swing) {
+    const r = TOUCH.MOVE_R, ox = T.swing.ox, oy = T.swing.oy;
+    ctx.font = '600 12px system-ui, sans-serif';
+    for (const wgt of TOUCH.WEDGE) {
+      const rad = (wgt.a * Math.PI) / 180;
+      const lx = ox + Math.cos(rad) * r * 1.05, ly = oy - Math.sin(rad) * r * 1.05;
+      const lit = wgt.key === T.swing.key && T.swing.latched;
+      ctx.fillStyle = lit ? 'rgba(90,231,208,0.95)' : 'rgba(180,210,225,0.35)';
+      ctx.fillText(WEDGE_LABEL[wgt.key], lx, ly);
+    }
+    const frac = G.player.charge ? clamp(G.player.charge.t / CHARGE_FULL, 0, 1) : 0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(ox, oy, r * 0.62, 0, 7); ctx.stroke();
+    if (frac > 0) {
+      ctx.strokeStyle = frac >= 1 ? '#3df0a8' : '#cde35a'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(ox, oy, r * 0.62, -Math.PI / 2, -Math.PI / 2 + frac * 7, false); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 export function render() {
   ctx.setTransform(RES,0,0,RES,0,0);
   ctx.clearRect(0,0,W,H);
@@ -744,4 +818,5 @@ export function render() {
   const v = ctx.createRadialGradient(CX,H*0.55,H*0.45,CX,H*0.55,H*0.95);
   v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.28)');
   ctx.fillStyle = v; ctx.fillRect(0,0,W,H);
+  drawTouchUI();
 }

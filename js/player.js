@@ -326,6 +326,7 @@ function doPlayerHit() {
     preNoise: { tx: txPreNoise, tz: tzPreNoise },
     final: { tx, tz }, speed, spin, clear,
   });
+  G.lastHitterEntity = 0;
   hitBall(0, tx, tz, speed, spin, clear, shotType);
   p.vx = clamp(p.vx + (b.x - p.x) * 2.0, -3, 3); p.vz *= 0.4;
   p.recover = Q.rec + (penalty > 1.3 ? 0.12 : 0);

@@ -4,10 +4,11 @@ import { showShot, fb } from './hud.js';
 import { startToss, strikeServe } from './serve.js';
 import { strokePress } from './player.js';
 import { openMenu, closeMenu } from './match.js';
+import { toggleStats } from './menu.js';
 import { servingPlayer } from './scoring.js';
 import { downloadLog } from './logger.js';
 
-const PREVENT = ['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Semicolon'];
+const PREVENT = ['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Semicolon','Tab'];
 
 window.addEventListener('keydown', e => {
   if (PREVENT.includes(e.code)) e.preventDefault();
@@ -22,7 +23,13 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyM') { G.mute = !G.mute; showShot(G.mute ? 'Sound off' : 'Sound on'); return; }
   if (e.code === 'KeyG') { downloadLog(); showShot('Log saved'); return; }
   if (e.code === 'KeyH') { document.getElementById('controlsCard')?.classList.toggle('hidden'); return; }
+  if (e.code === 'KeyZ') { G.showLandings = !G.showLandings; showShot(G.showLandings ? 'Shot map on' : 'Shot map off'); return; }
+  if (e.code === 'Tab') { if (G.started) toggleStats(); return; }
   if (G.paused || G.state === 'menu') return;
+  // SPACE tosses the serve (matches the on-screen hint); strike with J/K/L to pick type.
+  if (e.code === 'Space' && G.state === 'serve' && servingPlayer() === 0) {
+    startToss(0); return;
+  }
   if (e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyL' || e.code === 'KeyI' || e.code === 'Semicolon') {
     if (G.state === 'serve' && servingPlayer() === 0 && e.code !== 'Semicolon') {
       startToss(0); return;

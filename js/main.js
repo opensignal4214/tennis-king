@@ -11,6 +11,7 @@ import { logTick, logFrame } from './logger.js';
 import { updateGamepad } from './gamepad.js';
 import './menu.js';
 import './input.js';
+import './touch.js';
 
 function update(dt) {
   updateCamera(dt);

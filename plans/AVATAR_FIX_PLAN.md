@@ -1,7 +1,7 @@
 # Avatar body & stroke-form fix plan
 
-Four targeted fixes to the procedural avatar in [js/render.js](js/render.js) (`drawChar`) and
-the rig in [js/facing.js](js/facing.js) (`bodyAnchors`). Each fix is independent; apply in any
+Four targeted fixes to the procedural avatar in [js/render.js](../js/render.js) (`drawChar`) and
+the rig in [js/facing.js](../js/facing.js) (`bodyAnchors`). Each fix is independent; apply in any
 order. All line numbers are from the current `main` working tree.
 
 Rig recap: shoulders at y=1.45 (lat ±0.20), waist/hips at y=0.97 (lat ±0.13), lower hips
@@ -18,7 +18,7 @@ Two-handed backhand is flagged by `two = !fh && a.type === 'ground'`.
 (±0.13). So the shorts flare out like a skirt and the legs splay wider than the torso instead
 of meeting at the crotch.
 
-**Change A — narrow the leg-attach anchors.** [js/facing.js:42](js/facing.js#L42)
+**Change A — narrow the leg-attach anchors.** [js/facing.js:42](../js/facing.js#L42)
 
 Before:
 ```js
@@ -32,7 +32,7 @@ Now the leg tops sit *inside* the waist (±0.13). With leg top half-width `wT = 
 (render.js:379), the two leg quads nearly touch at the centre → "connect completely", and the
 shorts trapezoid tapers inward (shorts, not skirt).
 
-**Change B — match the render fallback offsets.** [js/render.js:362-363](js/render.js#L362-L363)
+**Change B — match the render fallback offsets.** [js/render.js:362-363](../js/render.js#L362-L363)
 
 These fallbacks fire only if `proj` returns null, but keep them consistent with the rig.
 
@@ -48,7 +48,7 @@ After:
 ```
 
 *Optional tuning:* if the planted feet still look too far apart, drop `STANCE_HALF` from `0.16`
-to `0.14` at [js/facing.js:8](js/facing.js#L8). Leave it unless the stance still reads wide
+to `0.14` at [js/facing.js:8](../js/facing.js#L8). Leave it unless the stance still reads wide
 after Change A.
 
 ---
@@ -58,7 +58,7 @@ after Change A.
 **Problem:** the forehand take-back hand sits at `sd*0.50` lateral with the tip at `sd*0.68` —
 the arm reaches too far back/out.
 
-**Change — shorten the take-back keyframes.** [js/render.js:472-474](js/render.js#L472-L474)
+**Change — shorten the take-back keyframes.** [js/render.js:472-474](../js/render.js#L472-L474)
 
 Before:
 ```js
@@ -81,7 +81,7 @@ unchanged, so the swing-through and finish keep their current reach.
 
 **Problems:**
 - **#2** Both arms are drawn together with a single front/back depth decision
-  ([js/render.js:618](js/render.js#L618)) keyed on the hand+tip average z. The racket tip swings
+  ([js/render.js:618](../js/render.js#L618)) keyed on the hand+tip average z. The racket tip swings
   that average across the threshold mid-swing, flipping the *whole* arm set front↔behind, so the
   crossing arm looks like it wraps around the back.
 - **#3** On the two-handed backhand both arms route through the *same* elbow point `ep`, so the
@@ -101,7 +101,7 @@ lateral offset), so it is never hidden behind the narrow torso even when drawn i
 This needs three edits: declare a second elbow, populate it in the backhand keyframes, and
 restructure the bottom of `drawChar` to layer the arms around the body per wing.
 
-### Change A — declare the off-arm elbow var. [js/render.js:430](js/render.js#L430)
+### Change A — declare the off-arm elbow var. [js/render.js:430](../js/render.js#L430)
 
 Before:
 ```js
@@ -112,7 +112,7 @@ After:
   let H2, T, off = null, two = false, E = null, Eo = null, shoulderTurn = 0;
 ```
 
-### Change B — add off-arm elbow keyframes in the backhand branch. [js/render.js:499-524](js/render.js#L499-L524)
+### Change B — add off-arm elbow keyframes in the backhand branch. [js/render.js:499-524](../js/render.js#L499-L524)
 
 Replace the entire backhand `else` block with this version (adds `KbEo/KcEo/KfEo` and assigns
 `Eo` in the two swing phases, mirroring how `E` is handled):
@@ -151,7 +151,7 @@ Replace the entire backhand `else` block with this version (adds `KbEo/KcEo/KfEo
       }
 ```
 
-### Change C — project the off-arm elbow. [js/render.js:544-545](js/render.js#L544-L545)
+### Change C — project the off-arm elbow. [js/render.js:544-545](../js/render.js#L544-L545)
 
 After:
 ```js
@@ -164,7 +164,7 @@ insert:
   if (epOff) epOff.x += lean;
 ```
 
-### Change D — restructure the arm/body layering. [js/render.js:547-619](js/render.js#L547-L619)
+### Change D — restructure the arm/body layering. [js/render.js:547-619](../js/render.js#L547-L619)
 
 Replace the whole region — the `const drawArms = () => { … };` closure **and** the final
 `if ((H2[2] + T[2]) / 2 < -0.06) { … } else { … }` dispatch (lines 547 through 619) — with the
@@ -295,7 +295,7 @@ What changed vs. the original:
 - `bhTwo`/`fhOne` only fire for `a.type === 'ground'`, so idle/ready and the `antSide`
   anticipation pose (no `a`) fall through to the original binary depth test.
 - The fallback `if (!hp||!tp) { drawBody(); return; }` at
-  [js/render.js:542](js/render.js#L542) is above this block and stays as-is.
+  [js/render.js:542](../js/render.js#L542) is above this block and stays as-is.
 
 ### Change E — straighten the arms at contact (matches the side-view reference)
 

@@ -29,7 +29,13 @@ export function simToPlane(zPlane) {
   const dt = 1 / 120;
   for (let t = 0; t < 2.4; t += dt) {
     const g = GRAV * (1 + 0.22 * spin);
-    vy -= g * dt; vx += curve * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+    const px = x, py = y, pz = z;
+    vy -= g * dt; vx += curve * dt; vx *= 1 - 0.045 * dt; vz *= 1 - 0.045 * dt; // match updateBall drag
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    if ((pz > 0) !== (z > 0) && pz !== z) {
+      const f = (0 - pz) / (z - pz);
+      if (py + (y - py) * f < netHeight(px + (x - px) * f)) return null; // dies at the net
+    }
     if (y <= 0 && vy < 0) {
       const e = spin > 0 ? 0.68 : spin < 0 ? 0.45 : 0.56;
       const fr = spin > 0 ? 0.90 : spin < 0 ? 0.80 : 0.83;
@@ -48,7 +54,13 @@ export function simBallToNpcZ(zPlane) {
   const dt = 1 / 120;
   for (let t = 0; t < 2.4; t += dt) {
     const g = GRAV * (1 + 0.22 * spin);
-    vy -= g * dt; vx += curve * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+    const px = x, py = y, pz = z;
+    vy -= g * dt; vx += curve * dt; vx *= 1 - 0.045 * dt; vz *= 1 - 0.045 * dt; // match updateBall drag
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    if ((pz > 0) !== (z > 0) && pz !== z) {
+      const f = (0 - pz) / (z - pz);
+      if (py + (y - py) * f < netHeight(px + (x - px) * f)) return null; // dies at the net
+    }
     if (y <= 0 && vy < 0) {
       const e = spin > 0 ? 0.68 : spin < 0 ? 0.45 : 0.56;
       const fr = spin > 0 ? 0.90 : spin < 0 ? 0.80 : 0.83;
@@ -65,7 +77,14 @@ export function predictLanding() {
   let x = b.x, y = b.y, z = b.z, vx = b.vx, vy = b.vy, vz = b.vz;
   const g = GRAV * (1 + 0.22 * b.spin), dt = 1 / 90, curve = b.curve || 0;
   for (let t = 0; t < 6.0; t += dt) { // long horizon so a high lob is still tracked to its landing
-    vy -= g * dt; vx += curve * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+    const px = x, py = y, pz = z;
+    vy -= g * dt; vx += curve * dt; vx *= 1 - 0.045 * dt; vz *= 1 - 0.045 * dt; // match updateBall drag
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    if ((pz > 0) !== (z > 0) && pz !== z) {              // crossing the net plane
+      const f = (0 - pz) / (z - pz);
+      const xc = px + (x - px) * f, yc = py + (y - py) * f;
+      if (yc < netHeight(xc)) return { x: xc, z: 0, vx, vz }; // ball dies at the net
+    }
     if (y <= 0 && vy < 0) return { x, z, vx, vz };
   }
   return null;
@@ -80,7 +99,13 @@ export function predictPath(maxT = 2.4) {
   let i = 0;
   for (let t = 0; t < maxT; t += dt, i++) {
     const g = GRAV * (1 + 0.22 * spin);
-    vy -= g * dt; vx += curve * dt; x += vx * dt; y += vy * dt; z += vz * dt;
+    const px = x, py = y, pz = z;
+    vy -= g * dt; vx += curve * dt; vx *= 1 - 0.045 * dt; vz *= 1 - 0.045 * dt; // match updateBall drag
+    x += vx * dt; y += vy * dt; z += vz * dt;
+    if ((pz > 0) !== (z > 0) && pz !== z) {              // ball dies at the net — no reachable points beyond
+      const f = (0 - pz) / (z - pz);
+      if (py + (y - py) * f < netHeight(px + (x - px) * f)) break;
+    }
     if (y <= 0 && vy < 0) {
       const e = spin > 0 ? 0.68 : spin < 0 ? 0.45 : 0.56;
       const fr = spin > 0 ? 0.90 : spin < 0 ? 0.80 : 0.83;

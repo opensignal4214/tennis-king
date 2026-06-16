@@ -33,18 +33,18 @@ export function setupServe() {
   N.netMode = false;
   let npcReceiveX = null;
   if (sv === 0) {
-    P.x = side === 'deuce' ? 1.2 : -1.2; P.z = 12.45;
+    P.x = side === 'deuce' ? 1.2 : -1.2; P.z = 12.3;
     const sgn = side === 'deuce' ? -1 : 1;
     const own = G.npcMem.serve[side], opp = G.npcMem.serve[side === 'deuce' ? 'ad' : 'deuce'];
     const recs = [];
     own.slice(-5).forEach(r => recs.push({ w: r.projX * sgn, k: r.w }));
     opp.slice(-5).forEach(r => recs.push({ w: r.projX * -sgn, k: r.w * 0.5 }));
-    let rx = sgn * 2.4;
+    let rx = sgn * 2.9;
     if (recs.length >= 2) {
       let sw = 0, sx = 0; recs.forEach(r => { sw += r.k; sx += r.w * r.k; });
       const wide = clamp(sx / sw, 0.4, 4.0);
       const adapt = { easy: 0.35, medium: 0.55, hard: 0.75 }[G.diffKey];
-      rx = sgn * (2.4 * (1 - adapt) + wide * adapt);
+      rx = sgn * (2.9 * (1 - adapt) + wide * adapt);
     }
     N.x = clamp(rx, -4.2, 4.2); N.z = -12.6 - DIFF[G.diffKey].retDepth; N.tgt = { x: N.x, z: N.z };
     npcReceiveX = N.x;
@@ -53,7 +53,8 @@ export function setupServe() {
     if (G.srvAim.x < bb.x1 || G.srvAim.x > bb.x2) G.srvAim.x = (bb.x1 + bb.x2) / 2;
   } else {
     N.x = side === 'deuce' ? -1.2 : 1.2; N.z = -12.45; N.tgt = { x: N.x, z: N.z };
-    P.x = side === 'deuce' ? 2.0 : -2.0; P.z = 12.6;
+    // Receiver starts wider — closer to their corner to cover the serve.
+    P.x = side === 'deuce' ? 2.9 : -2.9; P.z = 12.6;
   }
   P.vx = P.vz = 0; P.pending = null; P.recover = 0; P.antSide = 0; N.antSide = 0;
   b.active = false; b.held = true; b.trail.length = 0;
@@ -102,7 +103,7 @@ function setupServeDoubles(sv, side) {
   const svSideX = svTeam === 0
     ? (isDeuce ? 1.2 : -1.2)
     : (isDeuce ? -1.2 : 1.2);
-  const svBaseZ  = svTeam === 0 ? 12.45 : -12.45;
+  const svBaseZ  = svTeam === 0 ? 12.3 : -12.45;
 
   // Receiver position — adaptive for NPC (reuse serve memory from human team)
   let recvX;
@@ -112,28 +113,30 @@ function setupServeDoubles(sv, side) {
     const recs = [];
     own.slice(-5).forEach(r => recs.push({ w: r.projX * sgn, k: r.w }));
     opp.slice(-5).forEach(r => recs.push({ w: r.projX * -sgn, k: r.w * 0.5 }));
-    recvX = sgn * 2.4;
+    recvX = sgn * 2.9;
     if (recs.length >= 2) {
       let sw = 0, sx = 0; recs.forEach(r => { sw += r.k; sx += r.w * r.k; });
       const wide = clamp(sx / sw, 0.4, 4.0);
       const adapt = { easy: 0.35, medium: 0.55, hard: 0.75 }[G.diffKey];
-      recvX = sgn * (2.4 * (1 - adapt) + wide * adapt);
+      recvX = sgn * (2.9 * (1 - adapt) + wide * adapt);
     }
     recvX = clamp(recvX, -4.2, 4.2);
     const bb = serveBoxBounds();
     G.srvAim = { x: clamp(G.srvAim.x, bb.x1, bb.x2), z: clamp(G.srvAim.z, bb.z1, bb.z2) };
     if (G.srvAim.x < bb.x1 || G.srvAim.x > bb.x2) G.srvAim.x = (bb.x1 + bb.x2) / 2;
   } else {
-    // CPU serves: human receiver goes to their deuce/ad side
-    recvX = isDeuce ? 2.0 : -2.0;
+    // CPU serves: human receiver goes wide to their deuce/ad corner
+    recvX = isDeuce ? 2.9 : -2.9;
   }
   const recvBaseZ = svTeam === 0 ? -12.6 - d.retDepth : 12.6;
 
   // Net positions: server's partner and receiver's partner go to net (opposite side from baseline partner)
   const svNetX    =  -svSideX * 1.2;
-  const svNetZ    = svTeam === 0 ? 2.5 : -2.5;
-  const recvNetX  = -recvX * 0.6; // net player on the side diagonal from receiver
-  const recvNetZ  = svTeam === 0 ? -2.5 : 2.5;
+  // Server's partner crowds the net while their partner serves.
+  const svNetZ    = svTeam === 0 ? 1.8 : -1.8;
+  // Receiver's partner hangs back near the service line, tucked toward the centre line.
+  const recvNetX  = -recvX * 0.45; // net player diagonal from receiver, nearer the middle
+  const recvNetZ  = svTeam === 0 ? -5.5 : 5.5;
 
   // Place server
   svEnt.x = svSideX; svEnt.z = svBaseZ;

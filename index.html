@@ -10,13 +10,33 @@
 <div id="wrap">
   <canvas id="cv" width="960" height="600"></canvas>
   <div class="overlay">
-    <div id="help"><b>WASD</b> move + aim (<b>A/D</b> direction, <b>W</b> deep, <b>S</b> short) &nbsp;·&nbsp; <b>J</b> top spin · <b>K</b> slice · <b>L</b> flat · <b>;</b> drop shot · <b>I</b> lob — net play &amp; overheads are automatic &nbsp;·&nbsp; <b>Serve:</b> <b>J/K/L</b> to toss · press again at the top to strike (J=top spin · K=slice · L=flat) &nbsp;·&nbsp; <b>M</b> sound · <b>G</b> save log · <b>Esc</b> menu</div>
+    <div id="help"><b>H</b> controls &nbsp;·&nbsp; <b>M</b> sound &nbsp;·&nbsp; <b>Esc</b> menu</div>
     <div id="hud"></div>
     <div id="rallyhud"></div>
     <div id="servehint"></div>
     <div id="msg"><span id="msgMain"></span><span class="sub" id="msgSub"></span></div>
     <div id="shotlbl"></div>
     <div id="gamepadStatus"></div>
+    <div id="controlsCard">
+      <div class="ctrl-head">Controls <span class="ctrl-hint">[H] hide</span></div>
+      <table class="ctrl-table">
+        <thead class="gp-only">
+          <tr><th></th><th class="ctrl-gp-col">🎮</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="ctrl-key">WASD</td><td class="ctrl-gp-col">L-stick / D-pad</td><td>Move &amp; aim</td></tr>
+          <tr class="gp-only"><td class="ctrl-key">—</td><td class="ctrl-gp-col">R-stick</td><td>Serve aim</td></tr>
+          <tr><td class="ctrl-key">J</td><td class="ctrl-gp-col">✕</td><td>Topspin</td></tr>
+          <tr><td class="ctrl-key">K</td><td class="ctrl-gp-col">□</td><td>Slice</td></tr>
+          <tr><td class="ctrl-key">L</td><td class="ctrl-gp-col">○</td><td>Flat</td></tr>
+          <tr><td class="ctrl-key">I</td><td class="ctrl-gp-col">△</td><td>Lob</td></tr>
+          <tr><td class="ctrl-key">;</td><td class="ctrl-gp-col">R1</td><td>Drop shot</td></tr>
+          <tr><td class="ctrl-key">Esc</td><td class="ctrl-gp-col">Options</td><td>Menu</td></tr>
+          <tr><td class="ctrl-key">M</td><td class="ctrl-gp-col">Create</td><td>Mute</td></tr>
+        </tbody>
+      </table>
+      <div class="ctrl-serve">Serve: J/K/L<span class="ctrl-gp-inline"> or face btn</span> → toss · press again → strike</div>
+    </div>
   </div>
   <div id="menu">
     <div class="card">

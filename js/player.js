@@ -1,4 +1,4 @@
-import { QUAL, PRESS_LEAD, HL, SW, CHARGE_FULL, CHARGE_MIN_POW, CHARGE_MAX_POW } from './constants.js';
+import { QUAL, PRESS_LEAD, SW, DW, HL, CHARGE_FULL, CHARGE_MIN_POW, CHARGE_MAX_POW } from './constants.js';
 import { G, keys } from './state.js';
 import { clamp, lerp, gauss, rnd, bodyContactPenalty } from './utils.js';
 import { showShot, fb } from './hud.js';
@@ -41,8 +41,10 @@ export function updatePlayer(dt) {
     p.z = clamp(p.z + p.vz * dt, 0.75, 16.0);
     if (G.state === 'serve' && servingPlayer() === 0) {
       const ss = serveSide();
-      p.x = clamp(p.x, ss === 'deuce' ? 0.0 : -SW, ss === 'deuce' ? SW : 0.0);
-      p.z = clamp(p.z, HL, 14.5);
+      // Keep the inner foot on the serving side of the center mark (x=0): the stance
+      // straddles ~0.16m and the shoe adds ~0.1m, so cap the body centre ~0.3m off centre.
+      p.x = clamp(p.x, ss === 'deuce' ? 0.3 : -SW, ss === 'deuce' ? SW : -0.3);
+      p.z = clamp(p.z, 12.1, 14.5);
     }
   } else { p.vx = p.vz = 0; }
   p.spd = Math.hypot(p.vx, p.vz);
@@ -113,6 +115,11 @@ export function strokePress(key) {
   if (G.state !== 'live') return;
   if (p.charge || p.pending || p.cool > 0 || p.swingCd > 0) return;
   if (b.lastHitter !== 1 || b.held) return;
+  // Doubles serve return: only the designated receiver may play the ball — the net
+  // partner must let it go (same no-poach rule the AI players already follow).
+  if (G.matchType === 'doubles' && G.rally === 1 && G.receiverEntity !== 0) {
+    fb('Let your partner return', '#e0a05a'); return;
+  }
   if (b.bounces === 0 && p.z < 8.5 && b.y <= 1.85) { instantHit(key); return; }
   const st = G.strike;
   p.charge = { key, t: 0 };
@@ -222,15 +229,20 @@ function doPlayerHit() {
     else                          { spin = -1; speed = 11; clear = 0.5; tzBase = -3.4; label = 'Touch Overhead'; shotType = 'soft'; }
   } else if (!bounced) {
     animType = 'volley';
-    if (pend.key === 'KeyJ')      { speed = 17;   clear = 0.5;  tzBase = -6.8; label = `${fh} Punch Volley`;  shotType = 'flat'; }
-    else if (pend.key === 'KeyK') { spin = -1; speed = 13; clear = 0.5; tzBase = -5.5; label = `${fh} Slice Volley`; shotType = 'slice'; }
-    else                          { spin = -1; speed = 10.5; clear = 0.55; tzBase = -3.6; label = `${fh} Drop Volley`; shotType = 'soft'; }
+    // Key→shot mapping mirrors the ground strokes below (J=topspin, K=slice, L=flat,
+    // I=lob, ;=drop) and reuses the same shotType/shotTol so each volley runs through
+    // the identical error model as its baseline counterpart.
+    if (pend.key === 'KeyJ')      { spin = 1;  speed = 16;   clear = 0.6;  tzBase = -7.0; label = `${fh} Top Spin Volley`; shotTol = 0.7;  shotType = 'topspin'; }
+    else if (pend.key === 'KeyK') { spin = -1; speed = 13;   clear = 0.5;  tzBase = -5.5; label = `${fh} Slice Volley`;    shotTol = 0.95; shotType = 'slice'; }
+    else if (pend.key === 'KeyL') { spin = 0;  speed = 18;   clear = 0.45; tzBase = -7.0; label = `${fh} Punch Volley`;    shotTol = 1.1;  shotType = 'flat'; }
+    else if (pend.key === 'KeyI') { speed = 12.5; clear = 3.1; tzBase = -10.2; label = 'Lob Volley';                      shotTol = 1.0;  shotType = 'lob'; }
+    else                          { spin = -1; speed = 10.5; clear = 0.55; tzBase = -3.6; label = `${fh} Drop Volley`;    shotTol = 1.15; shotType = 'soft'; }
     if (!atNet) penalty = 1.35;
   } else {
     if (pend.key === 'KeyJ')      { spin = 1;  speed = 23.5; clear = 0.78; tzBase = -9.7;  label = `${fh} Top Spin`;   shotTol = 0.7;  shotType = 'topspin'; }
     else if (pend.key === 'KeyK') { spin = -1; speed = 16.5; clear = 1.05; tzBase = -9.4;  label = `${fh} Slice`;      shotTol = 0.95; shotType = 'slice'; }
     else if (pend.key === 'KeyL') { spin = 0;  speed = 27;   clear = 0.42; tzBase = -10.0; label = `${fh} Flat Drive`; shotTol = 1.5;  shotType = 'flat'; }
-    else if (pend.key === 'KeyI') { speed = 12.5; clear = 3.1; tzBase = -10.2; label = 'Lob';       shotTol = 1.0;  shotType = 'soft'; }
+    else if (pend.key === 'KeyI') { speed = 12.5; clear = 3.1; tzBase = -10.2; label = 'Lob';       shotTol = 1.0;  shotType = 'lob'; }
     else                          { spin = -1; speed = 9.5; clear = 0.35; tzBase = -3.3; label = 'Drop Shot'; shotTol = 1.15; shotType = 'soft'; if (p.z > 9.5) penalty = 1.45; }
   }
   if (p.anim) {
@@ -239,32 +251,78 @@ function doPlayerHit() {
     p.anim.contact = [clamp(b.x - p.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - p.z, -1.35, 1.35)];
   }
   let tz = tzBase + (depth > 0 ? 1.4 : depth < 0 ? -2.3 : 0);
-  let tx = aim * 2.9;
+  const wellTimed = pend.q === 'perfect' || pend.q === 'good';
+  const aimReach = (G.matchType === 'doubles' && wellTimed) ? 4.8
+                 : (G.matchType === 'doubles')              ? 3.4
+                 :                                            2.9;
+  let tx = aim * aimReach;
   const lunge = Math.min(1, d / 1.4);
   const bodyPen = bodyContactPenalty(contactX, fore, false);
   penalty *= bodyPen;
-  const nf = Q.noise * penalty * shotTol;
-  tx += gauss() * (0.30 + 1.0 * lunge * lunge) * nf;
-  tz += gauss() * (0.55 + 1.2 * lunge * lunge) * nf;
+  const isFlat = shotType === 'flat' || shotType === 'smash';
+  // --- Shot-type-aware error model ---
+  // Flat drives/volleys/smashes spray out at any timing (goal 1). Spin & touch
+  // shots bleed depth/power when slightly off (goal 2) and only risk net/out when
+  // mistimed (goal 3). Lobs: charge sets depth, timing sets out-vs-short (goal 4).
+  let shank = null;
+  if (shotType === 'lob') {
+    const p01 = pend.charged ? pend.power : 0.5;
+    tz = lerp(-6.8, -12.7, p01) + (depth > 0 ? -0.5 : depth < 0 ? 0.9 : 0);
+    const lobErr = { perfect: 0.25, good: 0.6, ok: 1.3, weak: 2.4 }[pend.q];
+    tz += gauss() * lobErr;                       // long(-) → out, short(+) → in but shallow
+    tx += gauss() * 0.5 * penalty;                // minimal lateral
+  } else if (isFlat) {
+    const nf = Q.noise * penalty * shotTol;
+    tx += gauss() * (0.30 + 1.0 * lunge * lunge) * nf;
+    tz += gauss() * (0.55 + 1.2 * lunge * lunge) * nf;
+  } else {
+    // spin/touch: tiny lateral wobble (never wide at good/ok); degrade depth toward
+    // the net as timing/lunge worsen → a weaker, shorter ball
+    const nf = Q.noise * penalty * shotTol;
+    tx += gauss() * (0.18 + 0.4 * lunge * lunge) * nf * 0.45;
+    tz += (0.30 + 0.9 * lunge * lunge) * nf * 0.5;   // +tz = shorter / weaker
+  }
   tz = clamp(tz, -13.5, -2.0);
   tx = clamp(tx, -5.8, 5.8);
   const txPreNoise = tx, tzPreNoise = tz;
-  let shank = null;
-  if (Math.random() < (Q.shank * penalty + 0.12 * lunge * lunge) * shotTol) {
-    const roll = Math.random();
-    if (roll < 0.4)        { tx = (tx >= 0 ? 1 : -1) * rnd(4.4, 5.6); shank = 'wide'; }
-    else if (roll < 0.75)  { tz = rnd(-13.6, -12.2); shank = 'long'; }
-    else                   { tz = rnd(-3.5, -2.0); clear = -0.35; shank = 'net'; }
+  // Latent out-risk for this shot, hoisted so it can be logged. The lunge-driven
+  // spray on flat shots is scaled by Q.noise so timing quality matters: perfect
+  // (0.55) sprays far less than good (1.0)/ok (2.0)/weak (3.2). This keeps flat
+  // drives risky on a stretch while making a perfectly-timed shot genuinely safe.
+  const shankP = isFlat
+    ? (Q.shank * penalty + 0.12 * lunge * lunge * Q.noise) * shotTol
+    : (shotType !== 'lob' && pend.q === 'weak')
+      ? 0.55 * penalty * shotTol
+      : 0;
+  if (isFlat) {
+    if (Math.random() < shankP) {
+      const roll = Math.random();
+      if (roll < 0.4)        { tx = (tx >= 0 ? 1 : -1) * rnd(4.4, 5.6); shank = 'wide'; }
+      else if (roll < 0.75)  { tz = rnd(-13.6, -12.2); shank = 'long'; }
+      else                   { tz = rnd(-3.5, -2.0); clear = -0.35; shank = 'net'; }
+    }
+  } else if (shotType !== 'lob' && pend.q === 'weak') {
+    // mistimed spin/touch → mostly net, some long/wide (goal 3)
+    if (Math.random() < shankP) {
+      const roll = Math.random();
+      if (roll < 0.6)        { tz = rnd(-3.5, -2.0); clear = -0.35; shank = 'net'; }
+      else if (roll < 0.85)  { tz = rnd(-13.6, -12.2); shank = 'long'; }
+      else                   { tx = (tx >= 0 ? 1 : -1) * rnd(4.4, 5.6); shank = 'wide'; }
+    }
   }
   const powerMult = pend.charged ? lerp(CHARGE_MIN_POW, CHARGE_MAX_POW, pend.power) : 1;
   speed *= Q.pow * powerMult * rnd(0.96, 1.04);
   clear *= Q.clr;
   if (b.y < 0.35 && animType === 'ground') { speed *= 0.86; clear += 0.25; }
+  // Is the final aim point inside the court? (margin negative ⇒ aimed out, before drag)
+  const halfW = G.matchType === 'doubles' ? DW : SW;
+  const targetMargin = { dz: HL - Math.abs(tz), dx: halfW - Math.abs(tx) };
+  const targetIn = targetMargin.dz >= 0 && targetMargin.dx >= 0;
   logEvent('playerShot', {
     key: pend.key, q: pend.q, label, animType, fore, aim, depth,
     charged: pend.charged, power: pend.charged ? pend.power : null, panic: pend.panic || false,
     powerMult, dist: d, contact: { x: contactX, y: b.y, z: b.z - p.z },
-    lunge, penalty, shank,
+    lunge, penalty, shank, shankP, targetIn, targetMargin,
     preNoise: { tx: txPreNoise, tz: tzPreNoise },
     final: { tx, tz }, speed, spin, clear,
   });

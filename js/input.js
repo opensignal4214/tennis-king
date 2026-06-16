@@ -21,6 +21,7 @@ window.addEventListener('keydown', e => {
   }
   if (e.code === 'KeyM') { G.mute = !G.mute; showShot(G.mute ? 'Sound off' : 'Sound on'); return; }
   if (e.code === 'KeyG') { downloadLog(); showShot('Log saved'); return; }
+  if (e.code === 'KeyH') { document.getElementById('controlsCard')?.classList.toggle('hidden'); return; }
   if (G.paused || G.state === 'menu') return;
   if (e.code === 'KeyJ' || e.code === 'KeyK' || e.code === 'KeyL' || e.code === 'KeyI' || e.code === 'Semicolon') {
     if (G.state === 'serve' && servingPlayer() === 0 && e.code !== 'Semicolon') {

@@ -1,10 +1,10 @@
 export const W=960, H=600, CX=480, CY=212, FOC=560;
 export const COLORS={
-  teal:  {shirt:'#2dd9c0',shorts:'#0e5f54'},
-  coral: {shirt:'#ff6b57',shorts:'#7e2c20'},
-  cobalt:{shirt:'#4a90e2',shorts:'#1a3a6b'},
-  amber: {shirt:'#f5a623',shorts:'#7a4e00'},
-  violet:{shirt:'#9b59b6',shorts:'#4a235a'},
+  teal:  {shirt:'#2dd9c0',shirtHi:'#54f0d8',shirtLo:'#179f8c',shorts:'#0e5f54',shortsHi:'#15826f',shortsLo:'#073d36'},
+  coral: {shirt:'#ff6b57',shirtHi:'#ff8f7e',shirtLo:'#d44a38',shorts:'#7e2c20',shortsHi:'#a13d2e',shortsLo:'#561a12'},
+  cobalt:{shirt:'#4a90e2',shirtHi:'#6fa9ef',shirtLo:'#2f6bb5',shorts:'#1a3a6b',shortsHi:'#295089',shortsLo:'#0e2447'},
+  amber: {shirt:'#f5a623',shirtHi:'#ffc04f',shirtLo:'#cc8410',shorts:'#7a4e00',shortsHi:'#9c6610',shortsLo:'#523300'},
+  violet:{shirt:'#9b59b6',shirtHi:'#b97bd2',shirtLo:'#743f8c',shorts:'#4a235a',shortsHi:'#623278',shortsLo:'#32163f'},
 };
 export const COLOR_KEYS=['teal','coral','cobalt','amber','violet'];
 export const HL=11.885, SW=4.115, DW=5.485, SVC=6.4, NETX=5.2;
@@ -29,6 +29,6 @@ export const CHARGE_MIN_POW=0.62;
 export const CHARGE_MAX_POW=1.30;
 export const SERVE_TYPE={
   flat: {m:1.05, clr:0.05, spin:0,  curve:0,    label:'Flat Serve',     tol:0.5,  fault:{perfect:0, good:0.20, ok:0.55, weak:0.85}},
-  kick: {m:0.75, clr:0.50, spin:1,  curve:-0.6, label:'Top Spin Serve', tol:1.15, fault:{perfect:0, good:0.00, ok:0.08, weak:0.25}},
-  slice:{m:0.85, clr:0.18, spin:-1, curve:1.6,  label:'Slice Serve',    tol:1.0,  fault:{perfect:0, good:0.05, ok:0.20, weak:0.45}},
+  kick: {m:0.75, clr:0.50, spin:1,  curve:-0.6, label:'Top Spin Serve', tol:1.15, fault:{perfect:0, good:0.00, ok:0.00, weak:0.25}},
+  slice:{m:0.85, clr:0.18, spin:-1, curve:1.6,  label:'Slice Serve',    tol:1.0,  fault:{perfect:0, good:0.00, ok:0.05, weak:0.45}},
 };

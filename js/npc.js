@@ -1,4 +1,4 @@
-import { DIFF, TOSS_APEX, DW } from './constants.js';
+import { DIFF, TOSS_APEX, DW, SW, HL } from './constants.js';
 import { G } from './state.js';
 import { clamp, rnd, gauss, tossY, bodyContactPenalty } from './utils.js';
 import { hitBall } from './ball.js';
@@ -6,6 +6,19 @@ import { startToss, fireServe } from './serve.js';
 import { servingPlayer } from './scoring.js';
 import { predictLanding, simBallToNpcZ, predictPath } from './physics.js';
 import { logEvent } from './logger.js';
+
+// True when the current in-flight (un-bounced) ball is predicted to land beyond the
+// CPU court — so the CPU should let it sail out instead of returning it (esp. lobs).
+function ballHeadingOut() {
+  const b = G.ball;
+  if (b.bounces > 0 || b.vz >= 0) return false;
+  const L = predictLanding();
+  if (!L || L.z >= 0) return false;
+  const halfW = G.matchType === 'doubles' ? DW : SW;
+  // Small protective margin: now that predictLanding models drag the call is accurate,
+  // so only keep a sliver of slack against prediction error instead of a half-metre.
+  return L.z < -HL - 0.15 || Math.abs(L.x) > halfW + 0.15;
+}
 
 export function updateNPC(dt) {
   const n = G.npc, b = G.ball, d = DIFF[G.diffKey];
@@ -34,6 +47,8 @@ export function updateNPC(dt) {
   if (G.matchType === 'doubles') { cpuStep(G.npc, G.npc2, dt, true); return; }
 
   // ---- Singles (original logic unchanged) ----
+  const lobbed = b.vy > 6 || b.y > 3.2;
+  const headingOut = b.lastHitter === 0 && ballHeadingOut();
   if (b.lastHitter === 0) {
     const dxa = b.x - n.x;
     if (!n.antSide) n.antSide = dxa >= 0 ? 1 : -1;
@@ -43,7 +58,6 @@ export function updateNPC(dt) {
     else if (!n.plan) {
       const L = predictLanding();
       if (L && L.z < -8.0) n.netMode = false;
-      const lobbed = b.vy > 6 || b.y > 3.2;
       if (lobbed) n.netMode = false;
       const path = predictPath(lobbed ? 5.0 : 2.4);
       let comfort = null, feasibleAny = null, stretch = null, smash = null, minDef = Infinity;
@@ -72,6 +86,13 @@ export function updateNPC(dt) {
     if (n.plan) {
       if (b.bounces > 0) {
         n.tgt = { x: clamp(b.x + b.vx * 0.13, -7.5, 7.5), z: clamp(Math.min(b.z - 0.9, -0.8), -15, -0.8) };
+      } else if (headingOut) {
+        n.tgt = { x: n.x, z: n.z };               // ball sailing out — hold and let it go
+      } else if (lobbed) {
+        // Track the lob to its landing spot every frame instead of trusting a stale
+        // one-shot plan and ending up a step behind the bounce.
+        const L = predictLanding();
+        n.tgt = L ? { x: clamp(L.x, -7.5, 7.5), z: clamp(L.z - 0.6, -15, -0.8) } : n.plan;
       } else if (n.netMode && !b.isServe && b.bounces === 0) {
         const ic = simBallToNpcZ(-2.8);
         if (ic) n.tgt = { x: clamp(ic.x, -4.6, 4.6), z: -2.8 };
@@ -109,14 +130,14 @@ export function updateNPC(dt) {
     const fast = clamp((Math.abs(b.vz) - 16) / 18, 0, 1);
     const startR = 2.3 + fast * 1.4;
     const reachR = 1.4 + fast * 0.5;
-    if (!n.anim && r < startR && b.z < 1.5 && (b.bounces > 0 || b.y < 3.2)) {
+    if (!n.anim && !headingOut && r < startR && b.z < 1.5 && (b.bounces > 0 || b.y < 3.2)) {
       n.anim = { t: 0, side: n.antSide || (b.x >= n.x ? 1 : -1), type: ctxType };
     }
     let gate = ctxType === 'volley' ? 0.06 : ctxType === 'smash' ? 0.18 : 0.10;
     if (ctxType === 'ground') gate *= 1 - 0.6 * fast;
     if (n.anim && n.anim.t < gate)
       n.anim.contact = [clamp(b.x - n.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - n.z, -1.35, 1.35)];
-    if (r < reachR && b.y < 3.45 && b.z < 0.35 && (b.bounces > 0 || b.y < 3.0) && n.anim && n.anim.t >= gate) {
+    if (!headingOut && r < reachR && b.y < 3.45 && b.z < 0.35 && (b.bounces > 0 || b.y < 3.0) && n.anim && n.anim.t >= gate) {
       if (Math.random() < d.whiff) { logEvent('npcWhiff', {}); n.cool = 1.0; return; }
       npcHit(r);
     }
@@ -133,8 +154,21 @@ function npcHit(reachDist) {
   if (!bounced && b.y > 1.9 && lunge <= 0.75) { speed = d.pace + 9; spin = 0; clear = 0.22; tzBase = 8.6;  animType = 'smash';  shotType = 'smash'; }
   else if (!bounced && b.y > 1.9)              { speed = d.pace + 4; spin = 1; clear = 0.60; tzBase = 8.6;  animType = 'ground'; shotType = 'topspin'; }
   else if (!bounced && n.z > -6.5)  { speed = d.pace * 0.7; spin = 0; clear = 0.45; tzBase = 6.4; animType = 'volley'; shotType = 'volley'; }
-  else if (P.z < 7 && Math.random() < 0.30) { spin = 0; speed = 13; clear = 3.0; tzBase = 10.3; shotType = 'lob'; }
-  else if (Math.random() < 0.18)    { spin = -1; speed = d.pace * 0.74; clear = 1.0; tzBase = 9.2; shotType = 'slice'; }
+  else {
+    // Baseline groundstroke — choose the shot from court state, not a flat dice roll.
+    const playerAtNet  = P.z < 6;             // human has come forward
+    const playerDeep   = P.z > 13.3;          // human pinned behind the baseline
+    const incomingFast = Math.abs(b.vz) > 22;
+    const lowBall = bounced && b.y < 0.85;
+    const sitter  = bounced && b.y > 1.15 && lunge < 0.55;
+    if (playerAtNet && Math.random() < 0.55) { spin = 0; speed = 13;         clear = 3.0;  tzBase = 10.3; shotType = 'lob';   }
+    else if (playerAtNet)                    { spin = 0; speed = d.pace + 2; clear = 0.30; tzBase = 9.0;  shotType = 'flat';  } // dipping pass
+    else if (playerDeep && lunge < 0.6 && !incomingFast && Math.random() < 0.35)
+                                             { spin = -1; speed = 10.5;      clear = 0.5;  tzBase = 2.6;  shotType = 'soft';  } // drop shot
+    else if (sitter && Math.random() < 0.6) { spin = 0; speed = d.pace + 4; clear = 0.45; tzBase = 9.4;  shotType = 'flat';  } // punish the short ball
+    else if (lowBall || lunge > 0.8)         { spin = -1; speed = d.pace * 0.78; clear = 1.0; tzBase = 9.2; shotType = 'slice'; } // stay low / reset
+    // else: default topspin (set above)
+  }
 
   let tx, tz = tzBase + rnd(-1.2, 1.2);
   let aimMode;
@@ -411,6 +445,8 @@ function cpuStep(self, mate, dt, isPrimary) {
   const b = G.ball, d = DIFF[G.diffKey];
   const entityIdx = self === G.npc ? 2 : 3;
   const incoming = b.lastHitter === 0 && !b.isServe;
+  const lobbed = b.vy > 6 || b.y > 3.2;
+  const headingOut = b.lastHitter === 0 && ballHeadingOut();
 
   if (isPrimary) {
     if (incoming) pickCpuHitter();
@@ -436,6 +472,12 @@ function cpuStep(self, mate, dt, isPrimary) {
   if (amHitter && (self.reactT || 0) <= 0 && self.plan) {
     if (b.bounces > 0) {
       self.tgt = { x: clamp(b.x + b.vx * 0.13, -7.5, 7.5), z: clamp(Math.min(b.z - 0.9, -0.8), -15, -0.8) };
+    } else if (headingOut) {
+      self.tgt = { x: self.x, z: self.z };          // ball sailing out — hold and let it go
+    } else if (lobbed) {
+      // Track the lob to its landing spot every frame rather than a stale plan.
+      const L = predictLanding();
+      self.tgt = L ? { x: clamp(L.x, -7.5, 7.5), z: clamp(L.z - 0.6, -15, -0.8) } : self.plan;
     } else if (self.netMode && b.bounces === 0) {
       const ic = simBallToNpcZ(-2.8);
       if (ic) self.tgt = { x: clamp(ic.x, -4.6, 4.6), z: -2.8 };
@@ -443,6 +485,9 @@ function cpuStep(self, mate, dt, isPrimary) {
     } else {
       self.tgt = self.plan;
     }
+  } else if (G.rally === 1 && b.lastHitter === 0 && !amHitter && self.netMode) {
+    // Serve return: receiver's partner holds near the service line until it clears.
+    self.tgt = { x: typeof self.netX === 'number' ? self.netX : clamp(self.x, -3, 3), z: -5.5 };
   } else if (!amHitter && self.netMode && incoming) {
     // Non-hitter at net: try to intercept only if ball comes to own side
     const cover = cpuNetCover(self);
@@ -459,13 +504,13 @@ function cpuStep(self, mate, dt, isPrimary) {
   const ctxType = (!b.bounces && b.y > 1.9) ? 'smash' : (!b.bounces && self.z > -6.5) ? 'volley' : 'ground';
   const fast = clamp((Math.abs(b.vz) - 16) / 18, 0, 1);
   const startR = 2.3 + fast * 1.4, reachR = 1.4 + fast * 0.5;
-  if (!self.anim && r < startR && b.z < 1.5 && (b.bounces > 0 || b.y < 3.2))
+  if (!self.anim && !headingOut && r < startR && b.z < 1.5 && (b.bounces > 0 || b.y < 3.2))
     self.anim = { t: 0, side: self.antSide || (b.x >= self.x ? 1 : -1), type: ctxType };
   let gate = ctxType === 'volley' ? 0.06 : ctxType === 'smash' ? 0.18 : 0.10;
   if (ctxType === 'ground') gate *= 1 - 0.6 * fast;
   if (self.anim && self.anim.t < gate)
     self.anim.contact = [clamp(b.x - self.x, -1.35, 1.35), clamp(b.y, 0.25, 2.72), clamp(b.z - self.z, -1.35, 1.35)];
-  if (r < reachR && b.y < 3.45 && b.z < 0.35 && (b.bounces > 0 || b.y < 3.0) && self.anim && self.anim.t >= gate) {
+  if (!headingOut && r < reachR && b.y < 3.45 && b.z < 0.35 && (b.bounces > 0 || b.y < 3.0) && self.anim && self.anim.t >= gate) {
     if (Math.random() < d.whiff) { self.cool = 1.0; return; }
     cpuHit(self, entityIdx);
   }
@@ -529,8 +574,12 @@ export function updatePartner(dt) {
   } else {
     p.antSide = 0;
     const shift = clamp(b.x * 0.22, -1.3, 1.3);
-    const tx = clamp(p.homeSide * 2.4 + shift, -DW + 0.35, DW - 0.35);
-    const tz = p.netMode ? 2.5 : 11.5;
+    // Serve return: receiver's partner holds near the service line until it clears.
+    const serveReturnHold = G.rally === 1 && b.lastHitter === 1 && p.netMode;
+    const tx = serveReturnHold
+      ? clamp(typeof p.netX === 'number' ? p.netX : p.homeSide * 1.3, -DW + 0.35, DW - 0.35)
+      : clamp(p.homeSide * 2.4 + shift, -DW + 0.35, DW - 0.35);
+    const tz = serveReturnHold ? 5.5 : p.netMode ? 2.5 : 11.5;
     p.tgt = { x: tx, z: tz };
   }
 

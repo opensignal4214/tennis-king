@@ -22,9 +22,19 @@ export function hitBall(hitter, tx, tz, speed, spin, clear, shotType) {
     if (G.npc2) { G.npc2.reactT = DIFF[G.diffKey].react; G.npc2.plan = null; }
     G.strike = null;
   }
+  // Drag-aware predicted landing + in/out classification. Comparing target → predicted
+  // → the eventual bounce event isolates where a shot goes wrong: aimed out (target),
+  // solver/physics drift (predicted vs target), or sim mismatch (predicted vs bounce).
+  const L = predictLanding();
+  let predIn = null, predMargin = null;
+  if (L) {
+    const halfW = G.matchType === 'doubles' ? DW : SW;
+    predMargin = { dz: HL - Math.abs(L.z), dx: halfW - Math.abs(L.x) };
+    predIn = predMargin.dz >= 0 && predMargin.dx >= 0;
+  }
   logEvent('hit', {
     hitter, target: { tx, tz }, speed, spin, clear, shotType, rally: G.rally,
-    v: { vx: v.vx, vy: v.vy, vz: v.vz }, predicted: predictLanding(),
+    v: { vx: v.vx, vy: v.vy, vz: v.vz }, predicted: L, predIn, predMargin,
   });
   sHit(shotType, speed, { hitter });
   refreshHUD();

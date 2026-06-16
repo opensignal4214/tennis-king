@@ -12,11 +12,13 @@ const AIM_SPD = 4.5; // match player.js serve-aim speed (4.5 units/sec)
 let gpIndex = null;
 let prev = [];
 
-const statusEl = document.getElementById('gamepadStatus');
+const statusEl   = document.getElementById('gamepadStatus');
+const controlsEl = document.getElementById('controlsCard');
 
 window.addEventListener('gamepadconnected', e => {
   gpIndex = e.gamepad.index;
-  if (statusEl) { statusEl.textContent = '🎮 Controller'; statusEl.classList.add('active'); }
+  if (statusEl)   { statusEl.textContent = '🎮 Controller'; statusEl.classList.add('active'); }
+  if (controlsEl) controlsEl.classList.add('has-gp');
   showShot('Controller connected');
 });
 
@@ -25,7 +27,8 @@ window.addEventListener('gamepaddisconnected', e => {
   gpIndex = null;
   prev = [];
   for (const k of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyJ', 'KeyK', 'KeyL', 'KeyI', 'Semicolon']) keys[k] = false;
-  if (statusEl) statusEl.classList.remove('active');
+  if (statusEl)   statusEl.classList.remove('active');
+  if (controlsEl) controlsEl.classList.remove('has-gp');
   showShot('Controller disconnected');
 });
 
